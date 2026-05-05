@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Bildiri Başvuru Sistemi · Herediter Anjiyoödem ve İmmün Yetmezlikler</title>
+  <meta name="description" content="Herediter Anjiyoödem ve İmmün Yetmezliklere Zor Olgularla Pratik Çözümler — Poster bildiri özet başvuru sistemi." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2384cc16'/%3E%3Ctext x='50' y='66' text-anchor='middle' font-family='Arial' font-size='56' font-weight='700' fill='%231a2e05'%3EB%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+  <!-- ÜST NAV -->
+  <header class="topbar">
+    <div class="max-w-6xl mx-auto px-5 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-lime-400 text-lime-950 font-bold">B</span>
+        <span class="font-semibold tracking-tight" id="navBrand">Bildiri Sistemi</span>
+      </a>
+      <nav class="flex items-center gap-1 text-sm">
+        <a href="#hakkinda" class="px-3 py-1.5 rounded-lg hover:bg-zinc-100 hidden sm:inline">Hakkında</a>
+        <a href="#kurallar" class="px-3 py-1.5 rounded-lg hover:bg-zinc-100 hidden sm:inline">Kurallar</a>
+        <a href="#basvuru" class="btn btn-primary btn-sm">Başvuru Yap</a>
+        <a href="admin.html" class="btn btn-ghost btn-sm" title="Yönetici Girişi">Yönetici</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="max-w-6xl mx-auto px-5 pt-16 pb-10 fade-in">
+    <div class="flex flex-col lg:flex-row items-start gap-10">
+      <div class="flex-1">
+        <span class="inline-block badge bg-lime-100 text-lime-800 ring-1 ring-lime-200 mb-4">Poster Bildiri Özetleri Açık</span>
+        <h1 class="text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.05]" id="heroTitle">
+          Herediter Anjiyoödem ve İmmün Yetmezliklere
+          <span class="text-lime-600">Zor Olgularla Pratik Çözümler</span>
+        </h1>
+        <p class="text-zinc-600 mt-5 text-base sm:text-lg max-w-2xl">
+          Sade, hızlı ve mobil uyumlu poster bildiri başvuru sistemi. Tek sayfada doldurun — anlık kelime sayacı, otomatik başlık düzeltme ve dinamik yazar kartları ile karmaşa olmadan gönderin.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="#basvuru" class="btn btn-accent">Yeni Başvuru</a>
+          <button id="checkStatusBtn" class="btn btn-ghost">Başvuru Durumumu Sorgula</button>
+        </div>
+        <div class="mt-8 flex items-center gap-6 text-sm text-zinc-500">
+          <div><span class="font-semibold text-zinc-900" id="kpiCount">0</span> başvuru alındı</div>
+          <div>Kelime sınırı: <span class="font-semibold text-zinc-900" id="kpiLimit">350</span></div>
+          <div class="hidden sm:block">Son başvuru: <span class="font-semibold text-zinc-900" id="kpiDeadline">—</span></div>
+        </div>
+      </div>
+
+      <!-- HERO KART -->
+      <aside class="card w-full lg:w-[360px] p-6">
+        <h3 class="font-semibold text-zinc-900">Tek bakışta süreç</h3>
+        <ol class="mt-4 space-y-3 text-sm text-zinc-700">
+          <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">1</span> Yazar ve kurum bilgilerini ekleyin</li>
+          <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">2</span> Başlık ve özeti yazın (350 kelime sınır)</li>
+          <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">3</span> Anahtar kelimeleri girin</li>
+          <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">4</span> Onaylayın ve gönderin</li>
+        </ol>
+        <div class="divider"></div>
+        <p class="text-xs text-zinc-500">Başvuru numaranızla durumunuzu istediğiniz zaman sorgulayabilirsiniz.</p>
+      </aside>
+    </div>
+  </section>
+
+  <!-- KURALLAR -->
+  <section id="kurallar" class="max-w-6xl mx-auto px-5 py-10">
+    <h2 class="text-2xl font-semibold tracking-tight">Bildiri Yazım Kuralları</h2>
+    <div class="grid sm:grid-cols-3 gap-4 mt-6">
+      <div class="card p-5">
+        <div class="text-lime-600 text-xl">①</div>
+        <h3 class="mt-2 font-semibold">Format</h3>
+        <p class="text-sm text-zinc-600 mt-1">Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. 350 kelime sınırı (başlık ve yazar bilgileri hariç).</p>
+      </div>
+      <div class="card p-5">
+        <div class="text-lime-600 text-xl">②</div>
+        <h3 class="mt-2 font-semibold">İçerik</h3>
+        <p class="text-sm text-zinc-600 mt-1">Olgu sunumu/derleme/araştırma. Türkçe veya İngilizce yazılabilir. Tablo/şekil yerine açıklayıcı metin tercih edilir.</p>
+      </div>
+      <div class="card p-5">
+        <div class="text-lime-600 text-xl">③</div>
+        <h3 class="mt-2 font-semibold">Etik</h3>
+        <p class="text-sm text-zinc-600 mt-1">Kişisel sağlık verisi paylaşılmamalı. İnsan/hayvan çalışmalarında etik kurul onayı belirtilmelidir.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORM -->
+  <section id="basvuru" class="max-w-3xl mx-auto px-5 py-12">
+    <div class="card p-6 sm:p-8">
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 class="text-2xl font-semibold tracking-tight">Bildiri Başvuru Formu</h2>
+          <p class="text-sm text-zinc-600 mt-1">Tüm zorunlu alanları doldurarak gönderin. Form otomatik kaydedilir, sayfayı kapatsanız bile devam edebilirsiniz.</p>
+        </div>
+        <span id="autosaveBadge" class="badge bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200">Otomatik kaydet hazır</span>
+      </div>
+
+      <form id="submissionForm" class="mt-6 space-y-6" novalidate>
+        <!-- 1) İletişim -->
+        <fieldset class="space-y-4">
+          <legend class="text-sm font-semibold text-zinc-900">1. İletişim Bilgileri</legend>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div>
+              <label class="label" for="contactName">Ad Soyad <span class="text-rose-500">*</span></label>
+              <input id="contactName" name="contactName" class="field" required placeholder="Dr. Ayşe Yılmaz" />
+            </div>
+            <div>
+              <label class="label" for="contactEmail">E-posta <span class="text-rose-500">*</span></label>
+              <input id="contactEmail" name="contactEmail" type="email" class="field" required placeholder="ornek@kurum.edu.tr" />
+            </div>
+            <div>
+              <label class="label" for="contactPhone">Telefon</label>
+              <input id="contactPhone" name="contactPhone" class="field" placeholder="+90 5xx xxx xx xx" />
+            </div>
+            <div>
+              <label class="label" for="contactInst">Kurum (iletişim)</label>
+              <input id="contactInst" name="contactInst" class="field" placeholder="Ana kurum / hastane" />
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <!-- 2) Yazarlar -->
+        <fieldset class="space-y-3">
+          <legend class="text-sm font-semibold text-zinc-900">2. Yazarlar</legend>
+          <p class="helper">En az bir yazar zorunludur. Sunan yazarı işaretleyin. Kurum numarasını yazar yanına ekleyin (alttaki kurum listesi ile eşleşir).</p>
+          <div id="authorList" class="space-y-2"></div>
+          <button type="button" id="addAuthorBtn" class="btn btn-ghost btn-sm">+ Yazar ekle</button>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <!-- 3) Kurumlar -->
+        <fieldset class="space-y-3">
+          <legend class="text-sm font-semibold text-zinc-900">3. Kurumlar</legend>
+          <p class="helper">Her kurum tek satırda. Yazarlar yanında parantez içinde 1, 2 gibi numaralar bu sıraya karşılık gelir.</p>
+          <div id="affList" class="space-y-2"></div>
+          <button type="button" id="addAffBtn" class="btn btn-ghost btn-sm">+ Kurum ekle</button>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <!-- 4) Başlık -->
+        <fieldset class="space-y-3">
+          <legend class="text-sm font-semibold text-zinc-900">4. Bildiri Başlığı</legend>
+          <div>
+            <label class="label" for="title">Başlık <span class="text-rose-500">*</span></label>
+            <input id="title" name="title" class="field" required maxlength="220" placeholder="örn. C1-İnhibitör Eksikliğine Bağlı Tekrarlayan Anjiyoödem Atağı: Tanı ve Yönetim" />
+            <p class="helper">Yazarken otomatik <strong>Title Case</strong>'e dönüşür. Boşluklar normalleştirilir.</p>
+          </div>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <!-- 5) Özet -->
+        <fieldset class="space-y-3">
+          <legend class="text-sm font-semibold text-zinc-900">5. Özet</legend>
+          <div>
+            <label class="label" for="abstract">Bildiri özeti (Giriş — Olgu/Yöntem — Bulgular — Tartışma) <span class="text-rose-500">*</span></label>
+            <textarea id="abstract" name="abstract" class="field" required placeholder="Olgu sunumunuzun veya çalışmanızın özetini buraya yazın..."></textarea>
+            <div class="flex items-center justify-between mt-2">
+              <span class="text-xs text-zinc-500"><span id="wordCount">0</span> / <span id="wordLimit">350</span> kelime</span>
+              <span id="wordHint" class="text-xs text-zinc-500">Hedef: 250–350 kelime</span>
+            </div>
+            <div id="counterBar" class="counter-bar"><div style="width:0%"></div></div>
+          </div>
+          <div>
+            <label class="label" for="keywords">Anahtar Kelimeler (3–6 adet, virgülle ayrılır) <span class="text-rose-500">*</span></label>
+            <input id="keywords" name="keywords" class="field" required placeholder="HAE, C1-INH, anjiyoödem, immün yetmezlik" />
+          </div>
+        </fieldset>
+
+        <div class="divider"></div>
+
+        <!-- 6) Beyan -->
+        <fieldset class="space-y-3">
+          <legend class="text-sm font-semibold text-zinc-900">6. Beyan</legend>
+          <label class="flex items-start gap-3 text-sm text-zinc-700">
+            <input id="ethicsAck" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" required />
+            <span>Bu çalışmanın etik kurallara uygun yürütüldüğünü ve gerekli durumlarda etik kurul onayı bulunduğunu beyan ederim.</span>
+          </label>
+          <label class="flex items-start gap-3 text-sm text-zinc-700">
+            <input id="originalityAck" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" required />
+            <span>Bildirinin tüm yazarlardan onay alınmış özgün bir çalışma olduğunu beyan ederim.</span>
+          </label>
+        </fieldset>
+
+        <!-- Aksiyonlar -->
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-2">
+          <button type="button" id="resetBtn" class="btn btn-ghost">Formu temizle</button>
+          <button type="submit" id="submitBtn" class="btn btn-accent">Bildiriyi Gönder</button>
+        </div>
+
+        <p id="formError" class="text-sm text-rose-600 hidden"></p>
+      </form>
+    </div>
+  </section>
+
+  <!-- HAKKINDA -->
+  <section id="hakkinda" class="max-w-6xl mx-auto px-5 py-12">
+    <div class="grid lg:grid-cols-2 gap-8 items-center">
+      <div>
+        <h2 class="text-2xl font-semibold tracking-tight">Tek tıkla yönetim</h2>
+        <p class="text-zinc-600 mt-3">Tüm başvurular merkezi yönetim panelinden filtrelenebilir, kabul/ret edilebilir ve Word/Excel olarak dışa aktarılabilir.</p>
+        <ul class="mt-5 space-y-2 text-sm text-zinc-700">
+          <li>✓ Anlık arama ve filtreleme</li>
+          <li>✓ Rol bazlı erişim (Admin, Editör, Hakem)</li>
+          <li>✓ Tek tıkla DOCX bildiri çıktısı</li>
+          <li>✓ Toplu Excel raporu</li>
+          <li>✓ Mobil uyumlu, &lt;2sn yüklenme</li>
+        </ul>
+      </div>
+      <div class="card p-6">
+        <h3 class="font-semibold">Sık Sorulan Sorular</h3>
+        <details class="mt-4 group">
+          <summary class="cursor-pointer text-sm font-medium">Birden fazla bildiri gönderebilir miyim?</summary>
+          <p class="text-sm text-zinc-600 mt-2">Evet. Her başvurunuz ayrı bir bildiri numarası alır.</p>
+        </details>
+        <details class="mt-3 group">
+          <summary class="cursor-pointer text-sm font-medium">Başvurumu nasıl güncellerim?</summary>
+          <p class="text-sm text-zinc-600 mt-2">Bildiri numaranızla "Durumumu Sorgula" üzerinden güncel durumunuzu görebilirsiniz. Düzenleme talebiniz varsa <a class="link" href="mailto:sekreter@aid.org.tr">sekreter@aid.org.tr</a> ile iletişime geçin.</p>
+        </details>
+        <details class="mt-3 group">
+          <summary class="cursor-pointer text-sm font-medium">Hangi formatta gönderim alıyorsunuz?</summary>
+          <p class="text-sm text-zinc-600 mt-2">Yalnızca bu form. Word/PDF eki kabul edilmez.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t border-zinc-200 mt-10">
+    <div class="max-w-6xl mx-auto px-5 py-8 text-sm text-zinc-500 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+      <div id="footerOrg">© Türkiye Ulusal Allerji ve Klinik İmmünoloji Derneği</div>
+      <div class="flex items-center gap-4">
+        <a href="admin.html" class="link">Yönetici Girişi</a>
+        <a href="mailto:sekreter@aid.org.tr" class="link">İletişim</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- TOAST WRAP -->
+  <div id="toasts" class="toast-wrap" aria-live="polite"></div>
+
+  <!-- DURUM SORGULAMA MODALI -->
+  <div id="statusModal" class="modal-backdrop hidden">
+    <div class="modal p-6">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold">Başvuru Durumu Sorgula</h3>
+        <button class="btn btn-ghost btn-sm" data-close>Kapat</button>
+      </div>
+      <p class="text-sm text-zinc-600 mt-2">Bildiri numaranızı ve e-posta adresinizi girin.</p>
+      <div class="grid sm:grid-cols-2 gap-3 mt-4">
+        <input id="statusId" class="field" placeholder="örn. BLD-1001" />
+        <input id="statusEmail" class="field" type="email" placeholder="ornek@kurum.edu.tr" />
+      </div>
+      <div class="flex justify-end mt-4">
+        <button id="statusQueryBtn" class="btn btn-accent">Sorgula</button>
+      </div>
+      <div id="statusResult" class="mt-5"></div>
+    </div>
+  </div>
+
+  <!-- BAŞARILI GÖNDERİM MODALI -->
+  <div id="successModal" class="modal-backdrop hidden">
+    <div class="modal p-6">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 text-lg">✓</span>
+        <h3 class="text-lg font-semibold">Başvurunuz alındı</h3>
+      </div>
+      <p class="text-sm text-zinc-700 mt-3">
+        Bildiri numaranız: <span id="successId" class="font-semibold text-zinc-900"></span>
+      </p>
+      <p class="text-sm text-zinc-600 mt-2">
+        Bu numarayı saklayın; durumunuzu sorgulamak için kullanabilirsiniz. Bilgilendirme e-postaları organizasyon ekibi tarafından iletilecektir.
+      </p>
+      <div class="flex justify-end mt-5 gap-2">
+        <button class="btn btn-ghost" data-close>Tamam</button>
+        <button id="newSubmissionBtn" class="btn btn-accent">Yeni başvuru</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/supabase-driver.js"></script>
+  <script src="assets/user.js"></script>
+  <script>
+    // Supabase yüklendiğinde KPI'ları ve hero bilgisini yenile
+    document.addEventListener('bildiri:loaded', function () {
+      try {
+        const s = window.Bildiri.getSettings();
+        if (s.eventTitle) document.title = 'Bildiri Başvuru Sistemi · ' + s.eventTitle;
+        if (s.eventShort) document.getElementById('navBrand').textContent = s.eventShort;
+        if (s.organizer) document.getElementById('footerOrg').textContent = '© ' + s.organizer;
+        document.getElementById('kpiCount').textContent = window.Bildiri.listSubmissions().length;
+        document.getElementById('kpiLimit').textContent = s.wordLimit || 350;
+        document.getElementById('wordLimit').textContent = s.wordLimit || 350;
+      } catch (e) { console.warn(e); }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Yönetici Paneli · Bildiri Sistemi</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2384cc16'/%3E%3Ctext x='50' y='66' text-anchor='middle' font-family='Arial' font-size='52' font-weight='700' fill='%231a2e05'%3EA%3C/text%3E%3C/svg%3E" />
+  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+
+  <!-- LOGIN EKRANI -->
+  <section id="loginScreen" class="min-h-screen flex items-center justify-center px-5 py-10">
+    <div class="card w-full max-w-md p-8">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-lime-400 text-lime-950 font-bold text-lg">A</span>
+        <div>
+          <div class="font-semibold tracking-tight">Yönetici Paneli</div>
+          <div class="text-xs text-zinc-500" id="loginEvent">Bildiri Sistemi</div>
+        </div>
+      </div>
+      <h1 class="text-2xl font-semibold tracking-tight">Giriş Yap</h1>
+      <p class="text-sm text-zinc-600 mt-1">Yetkili kullanıcı adı ve şifrenizle giriş yapın.</p>
+      <form id="loginForm" class="mt-6 space-y-4">
+        <div>
+          <label class="label" for="user">Kullanıcı Adı</label>
+          <input id="user" class="field" autocomplete="username" required />
+        </div>
+        <div>
+          <label class="label" for="pass">Şifre</label>
+          <input id="pass" type="password" class="field" autocomplete="current-password" required />
+        </div>
+        <p id="loginErr" class="text-sm text-rose-600 hidden"></p>
+        <button type="submit" class="btn btn-primary w-full">Giriş yap</button>
+      </form>
+      <div class="mt-6 text-xs text-zinc-500">
+        İlk kurulumda varsayılan giriş: <code class="font-mono bg-zinc-100 px-1 rounded">admin / aid2026</code>. İlk girişten sonra şifrenizi değiştirin.
+      </div>
+      <div class="mt-3 text-xs">
+        <a href="index.html" class="link">← Başvuru sayfasına dön</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD -->
+  <section id="appScreen" class="hidden">
+
+    <!-- ÜST NAV -->
+    <header class="topbar">
+      <div class="max-w-7xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-lime-400 text-lime-950 font-bold">A</span>
+          <div>
+            <div class="font-semibold tracking-tight" id="appBrand">Yönetici Paneli</div>
+            <div class="text-xs text-zinc-500" id="appEvent">—</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-zinc-600 hidden sm:inline">
+            <span id="userBadge"></span>
+          </span>
+          <button id="logoutBtn" class="btn btn-ghost btn-sm">Çıkış</button>
+        </div>
+      </div>
+      <nav class="border-t border-zinc-200">
+        <div class="max-w-7xl mx-auto px-5 flex items-center gap-1 overflow-x-auto">
+          <button class="tab-btn px-4 py-2.5 text-sm font-medium text-zinc-700 border-b-2 border-transparent" data-tab="overview">Genel Bakış</button>
+          <button class="tab-btn px-4 py-2.5 text-sm font-medium text-zinc-700 border-b-2 border-transparent" data-tab="submissions">Bildiriler</button>
+          <button class="tab-btn px-4 py-2.5 text-sm font-medium text-zinc-700 border-b-2 border-transparent" data-tab="admins">Yöneticiler</button>
+          <button class="tab-btn px-4 py-2.5 text-sm font-medium text-zinc-700 border-b-2 border-transparent" data-tab="settings">Ayarlar</button>
+          <button class="tab-btn px-4 py-2.5 text-sm font-medium text-zinc-700 border-b-2 border-transparent" data-tab="audit">Hareket Günlüğü</button>
+        </div>
+      </nav>
+    </header>
+
+    <!-- TAB: GENEL BAKIŞ -->
+    <div id="tab-overview" class="tab-pane max-w-7xl mx-auto px-5 py-8">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card p-5"><div class="text-xs text-zinc-500">Toplam</div><div id="ov-total" class="text-3xl font-semibold mt-1">0</div></div>
+        <div class="card p-5"><div class="text-xs text-zinc-500">Beklemede</div><div id="ov-pending" class="text-3xl font-semibold mt-1 text-amber-600">0</div></div>
+        <div class="card p-5"><div class="text-xs text-zinc-500">Kabul</div><div id="ov-accepted" class="text-3xl font-semibold mt-1 text-emerald-600">0</div></div>
+        <div class="card p-5"><div class="text-xs text-zinc-500">Ret</div><div id="ov-rejected" class="text-3xl font-semibold mt-1 text-rose-600">0</div></div>
+      </div>
+      <div class="grid lg:grid-cols-2 gap-6 mt-6">
+        <div class="card p-5">
+          <h3 class="font-semibold">Son başvurular</h3>
+          <div id="ov-recent" class="mt-3 divide-y divide-zinc-100"></div>
+        </div>
+        <div class="card p-5">
+          <h3 class="font-semibold">Hızlı eylemler</h3>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button class="btn btn-ghost" id="qa-export-xlsx">Tüm bildirileri Excel olarak indir</button>
+            <button class="btn btn-ghost" id="qa-export-accepted-xlsx">Sadece kabul edilenler (Excel)</button>
+            <a class="btn btn-ghost" href="index.html" target="_blank">Başvuru sayfasını aç ↗</a>
+            <button class="btn btn-ghost" id="qa-print-list">Listeyi yazdır</button>
+          </div>
+          <div class="divider"></div>
+          <div class="text-xs text-zinc-500" id="ov-tip">İpucu: Bildiriler sekmesinde ⌘/Ctrl+F ile filtre kutusuna odaklanabilirsiniz.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: BİLDİRİLER -->
+    <div id="tab-submissions" class="tab-pane max-w-7xl mx-auto px-5 py-8 hidden">
+      <div class="card p-5">
+        <div class="flex flex-wrap gap-3 items-end justify-between">
+          <div class="flex flex-wrap gap-3 items-end">
+            <div>
+              <label class="label" for="filterText">Ara</label>
+              <input id="filterText" class="field" placeholder="Başlık, yazar, e-posta, anahtar kelime..." style="min-width:280px;" />
+            </div>
+            <div>
+              <label class="label" for="filterStatus">Durum</label>
+              <select id="filterStatus" class="field">
+                <option value="">Tümü</option>
+                <option value="pending">Beklemede</option>
+                <option value="accepted">Kabul</option>
+                <option value="rejected">Ret</option>
+                <option value="revision">Revizyon</option>
+              </select>
+            </div>
+            <div>
+              <label class="label" for="filterSort">Sırala</label>
+              <select id="filterSort" class="field">
+                <option value="new">Yeni → Eski</option>
+                <option value="old">Eski → Yeni</option>
+                <option value="title">Başlık (A→Z)</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button id="exportFilteredXlsx" class="btn btn-ghost">Filtreyi Excel'e</button>
+            <button id="clearFilters" class="btn btn-ghost">Temizle</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-5 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Başlık & Yazarlar</th>
+                <th>Durum</th>
+                <th>Gönderim</th>
+                <th class="text-right">Eylem</th>
+              </tr>
+            </thead>
+            <tbody id="subTbody"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="hidden p-10 text-center text-zinc-500 text-sm">Sonuç bulunamadı.</div>
+      </div>
+      <div class="mt-3 text-xs text-zinc-500"><span id="subCountInfo"></span></div>
+    </div>
+
+    <!-- TAB: YÖNETİCİLER -->
+    <div id="tab-admins" class="tab-pane max-w-7xl mx-auto px-5 py-8 hidden">
+      <div class="grid lg:grid-cols-2 gap-6">
+        <div class="card p-5">
+          <h3 class="font-semibold">Yönetici listesi</h3>
+          <div class="mt-3 overflow-hidden">
+            <table class="table">
+              <thead><tr><th>Ad</th><th>Kullanıcı</th><th>Rol</th><th class="text-right">Eylem</th></tr></thead>
+              <tbody id="adminTbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card p-5">
+          <h3 class="font-semibold">Yeni yönetici ekle</h3>
+          <form id="addAdminForm" class="mt-4 space-y-3">
+            <div><label class="label" for="aaName">Ad Soyad</label><input id="aaName" class="field" required /></div>
+            <div><label class="label" for="aaUser">Kullanıcı adı</label><input id="aaUser" class="field" required pattern="[a-zA-Z0-9._-]{3,}" /></div>
+            <div><label class="label" for="aaPass">Şifre</label><input id="aaPass" type="password" class="field" required minlength="6" /></div>
+            <div>
+              <label class="label" for="aaRole">Rol</label>
+              <select id="aaRole" class="field">
+                <option value="editor">Editör</option>
+                <option value="reviewer">Hakem</option>
+                <option value="super">Süper Admin</option>
+              </select>
+            </div>
+            <p id="addAdminErr" class="text-sm text-rose-600 hidden"></p>
+            <button class="btn btn-accent w-full" type="submit">Ekle</button>
+          </form>
+
+          <div class="divider"></div>
+
+          <h4 class="font-semibold mt-2">Şifremi değiştir</h4>
+          <form id="changePassForm" class="mt-3 space-y-3">
+            <div><label class="label" for="cpOld">Mevcut şifre</label><input id="cpOld" type="password" class="field" required /></div>
+            <div><label class="label" for="cpNew">Yeni şifre</label><input id="cpNew" type="password" class="field" required minlength="6" /></div>
+            <p id="cpErr" class="text-sm text-rose-600 hidden"></p>
+            <button class="btn btn-primary w-full" type="submit">Şifreyi güncelle</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: AYARLAR -->
+    <div id="tab-settings" class="tab-pane max-w-3xl mx-auto px-5 py-8 hidden">
+      <div class="card p-5">
+        <h3 class="font-semibold">Genel Ayarlar</h3>
+        <form id="settingsForm" class="mt-5 space-y-4">
+          <div><label class="label" for="setEvent">Etkinlik adı</label><input id="setEvent" class="field" /></div>
+          <div><label class="label" for="setShort">Kısa ad (üst nav)</label><input id="setShort" class="field" /></div>
+          <div><label class="label" for="setOrg">Düzenleyen</label><input id="setOrg" class="field" /></div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div><label class="label" for="setLimit">Kelime sınırı</label><input id="setLimit" class="field" type="number" min="100" max="1000" /></div>
+            <div><label class="label" for="setDeadline">Son başvuru tarihi</label><input id="setDeadline" class="field" type="date" /></div>
+          </div>
+          <label class="flex items-center gap-2 text-sm text-zinc-700">
+            <input id="setOpen" type="checkbox" class="h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" />
+            Başvurular açık
+          </label>
+          <div class="flex justify-end">
+            <button class="btn btn-primary" type="submit">Ayarları kaydet</button>
+          </div>
+        </form>
+
+        <div class="divider"></div>
+        <h3 class="font-semibold">Veri yönetimi</h3>
+        <p class="text-sm text-zinc-600 mt-1">Tüm bildirileri JSON olarak yedekleyin veya geri yükleyin.</p>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button id="dataBackup" class="btn btn-ghost">Yedeği indir (.json)</button>
+          <label class="btn btn-ghost cursor-pointer">
+            Yedekten geri yükle
+            <input id="dataRestore" type="file" accept="application/json" class="hidden" />
+          </label>
+          <button id="dataWipe" class="btn btn-danger">Tüm verileri sil</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: AUDIT -->
+    <div id="tab-audit" class="tab-pane max-w-7xl mx-auto px-5 py-8 hidden">
+      <div class="card p-5">
+        <h3 class="font-semibold">Hareket günlüğü</h3>
+        <p class="text-xs text-zinc-500 mt-1">Son 500 işlem listelenir.</p>
+        <div class="overflow-x-auto mt-4">
+          <table class="table">
+            <thead><tr><th>Tarih</th><th>Kullanıcı</th><th>İşlem</th><th>Hedef</th><th>Detay</th></tr></thead>
+            <tbody id="auditTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DETAY MODAL -->
+  <div id="detailModal" class="modal-backdrop hidden">
+    <div class="modal p-0">
+      <div class="px-6 py-4 border-b border-zinc-200 flex items-center justify-between">
+        <h3 class="font-semibold">Bildiri Detayı</h3>
+        <button class="btn btn-ghost btn-sm" data-close>Kapat</button>
+      </div>
+      <div id="detailBody" class="p-6"></div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toasts" class="toast-wrap" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+  <script src="assets/app.js"></script>
+  <script src="assets/supabase-driver.js"></script>
+  <script src="assets/export.js"></script>
+  <script src="assets/admin.js"></script>
+  <script>
+    // Supabase verisi geldiğinde admin panelini yenile
+    document.addEventListener('bildiri:loaded', function () {
+      try {
+        const s = window.Bildiri.getSettings();
+        if (s.eventShort) document.getElementById('loginEvent').textContent = s.eventShort;
+        if (s.eventTitle) document.getElementById('appEvent').textContent = s.eventTitle;
+        // Eğer dashboard görünür durumdaysa render fonksiyonlarını tetikle
+        const evt = new CustomEvent('bildiri:render');
+        document.dispatchEvent(evt);
+      } catch (e) { console.warn(e); }
+    });
+  </script>
+</body>
+</html>
