@@ -1,0 +1,1 @@
+# kapadokya-bildiri-ozetleri
