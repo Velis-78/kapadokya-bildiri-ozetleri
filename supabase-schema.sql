@@ -111,75 +111,92 @@ alter table public.admins enable row level security;
 alter table public.settings enable row level security;
 alter table public.audit_log enable row level security;
 
+-- ---- YARDIMCI FONKSİYONLAR (SECURITY DEFINER ile RLS recursion'ı önler) ----
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (select 1 from public.admins where id = auth.uid());
+$$;
+
+create or replace function public.is_super_admin()
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (select 1 from public.admins where id = auth.uid() and role = 'super');
+$$;
+
+grant execute on function public.is_admin() to anon, authenticated;
+grant execute on function public.is_super_admin() to anon, authenticated;
+
 -- ---- POLİTİKALAR ----
 
 -- Submissions: anonim kullanıcılar yeni bildiri ekleyebilir
 drop policy if exists "anon_can_insert_submission" on public.submissions;
 create policy "anon_can_insert_submission"
-  on public.submissions for insert
-  to anon
-  with check (true);
+  on public.submissions for insert to anon with check (true);
 
--- Submissions: anonim kullanıcılar kendi e-postası + id ile okuyabilir
--- (durum sorgulama için — pratikte tüm okumayı yetkili kullanıcıya bırakacağız;
---  anon okumayı tamamen kapatmak istiyorsanız aşağıdaki politikayı silin)
+-- Submissions: anonim okumaya açık (durum sorgulama için)
 drop policy if exists "anon_can_read_own_submission" on public.submissions;
 create policy "anon_can_read_own_submission"
-  on public.submissions for select
-  to anon
-  using (true);
+  on public.submissions for select to anon using (true);
 
--- Submissions: oturum açmış admin tüm CRUD
+-- Submissions: admin tüm CRUD
 drop policy if exists "admin_full_access_submissions" on public.submissions;
 create policy "admin_full_access_submissions"
-  on public.submissions for all
-  to authenticated
-  using (exists (select 1 from public.admins a where a.id = auth.uid()))
-  with check (exists (select 1 from public.admins a where a.id = auth.uid()));
+  on public.submissions for all to authenticated
+  using (public.is_admin())
+  with check (public.is_admin());
 
--- Admins: sadece authenticated okuyabilir
+-- Admins: SELECT - authenticated herkes okur
 drop policy if exists "admins_select_authenticated" on public.admins;
 create policy "admins_select_authenticated"
-  on public.admins for select
-  to authenticated
-  using (true);
+  on public.admins for select to authenticated using (true);
 
--- Admins: sadece super admin yeni admin ekleyebilir/silebilir
+-- Admins: INSERT/UPDATE/DELETE - sadece super admin
 drop policy if exists "super_admin_manage_admins" on public.admins;
-create policy "super_admin_manage_admins"
-  on public.admins for all
-  to authenticated
-  using (exists (select 1 from public.admins a where a.id = auth.uid() and a.role = 'super'))
-  with check (exists (select 1 from public.admins a where a.id = auth.uid() and a.role = 'super'));
+drop policy if exists "super_admin_insert_admins" on public.admins;
+drop policy if exists "super_admin_update_admins" on public.admins;
+drop policy if exists "super_admin_delete_admins" on public.admins;
 
--- Settings: anonim okuyabilir (etkinlik adı, son tarih vb. kamuya açık)
+create policy "super_admin_insert_admins"
+  on public.admins for insert to authenticated with check (public.is_super_admin());
+
+create policy "super_admin_update_admins"
+  on public.admins for update to authenticated
+  using (public.is_super_admin()) with check (public.is_super_admin());
+
+create policy "super_admin_delete_admins"
+  on public.admins for delete to authenticated using (public.is_super_admin());
+
+-- Settings: SELECT herkes okur
 drop policy if exists "anon_read_settings" on public.settings;
-create policy "anon_read_settings"
-  on public.settings for select to anon using (true);
+create policy "anon_read_settings" on public.settings for select to anon using (true);
 
 drop policy if exists "auth_read_settings" on public.settings;
-create policy "auth_read_settings"
-  on public.settings for select to authenticated using (true);
+create policy "auth_read_settings" on public.settings for select to authenticated using (true);
 
--- Settings: yalnızca super admin değiştirebilir
+-- Settings: UPDATE sadece super admin
 drop policy if exists "super_admin_update_settings" on public.settings;
 create policy "super_admin_update_settings"
   on public.settings for update to authenticated
-  using (exists (select 1 from public.admins a where a.id = auth.uid() and a.role = 'super'))
-  with check (exists (select 1 from public.admins a where a.id = auth.uid() and a.role = 'super'));
+  using (public.is_super_admin()) with check (public.is_super_admin());
 
--- Audit: yalnızca authenticated okuyabilir; herkes (sistem) yazabilir
+-- Audit: authenticated okur, herkes yazar
 drop policy if exists "auth_read_audit" on public.audit_log;
-create policy "auth_read_audit"
-  on public.audit_log for select to authenticated using (true);
+create policy "auth_read_audit" on public.audit_log for select to authenticated using (true);
 
 drop policy if exists "auth_write_audit" on public.audit_log;
-create policy "auth_write_audit"
-  on public.audit_log for insert to authenticated with check (true);
+create policy "auth_write_audit" on public.audit_log for insert to authenticated with check (true);
 
 drop policy if exists "anon_write_audit" on public.audit_log;
-create policy "anon_write_audit"
-  on public.audit_log for insert to anon with check (true);
+create policy "anon_write_audit" on public.audit_log for insert to anon with check (true);
 
 -- ============================================================
 -- Kurulum sonrası: ilk super admin eklemek için
