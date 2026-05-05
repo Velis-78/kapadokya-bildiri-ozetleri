@@ -38,16 +38,13 @@
           Herediter Anjiyoödem ve İmmün Yetmezliklere
           <span class="text-lime-600">Zor Olgularla Pratik Çözümler</span>
         </h1>
-        <p class="text-zinc-600 mt-5 text-base sm:text-lg max-w-2xl">
-          Sade, hızlı ve mobil uyumlu poster bildiri başvuru sistemi. Tek sayfada doldurun — anlık kelime sayacı, otomatik başlık düzeltme ve dinamik yazar kartları ile karmaşa olmadan gönderin.
-        </p>
         <div class="mt-8 flex flex-wrap gap-3">
-          <a href="#basvuru" class="btn btn-accent">Yeni Başvuru</a>
-          <button id="checkStatusBtn" class="btn btn-ghost">Başvuru Durumumu Sorgula</button>
+          <a href="#basvuru" class="btn btn-accent">Bildiri Gönder</a>
+          <button id="checkStatusBtn" class="btn btn-ghost">Bildiri Sorgula</button>
         </div>
         <div class="mt-8 flex items-center gap-6 text-sm text-zinc-500">
           <div><span class="font-semibold text-zinc-900" id="kpiCount">0</span> başvuru alındı</div>
-          <div>Kelime sınırı: <span class="font-semibold text-zinc-900" id="kpiLimit">350</span></div>
+          <div>Kelime sınırı: <span class="font-semibold text-zinc-900" id="kpiLimit">500</span></div>
           <div class="hidden sm:block">Son başvuru: <span class="font-semibold text-zinc-900" id="kpiDeadline">—</span></div>
         </div>
       </div>
@@ -57,7 +54,7 @@
         <h3 class="font-semibold text-zinc-900">Tek bakışta süreç</h3>
         <ol class="mt-4 space-y-3 text-sm text-zinc-700">
           <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">1</span> Yazar ve kurum bilgilerini ekleyin</li>
-          <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">2</span> Başlık ve özeti yazın (350 kelime sınır)</li>
+          <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">2</span> Başlık ve özeti yazın (500 kelime sınırı)</li>
           <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">3</span> Anahtar kelimeleri girin</li>
           <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">4</span> Onaylayın ve gönderin</li>
         </ol>
@@ -70,21 +67,16 @@
   <!-- KURALLAR -->
   <section id="kurallar" class="max-w-6xl mx-auto px-5 py-10">
     <h2 class="text-2xl font-semibold tracking-tight">Bildiri Yazım Kuralları</h2>
-    <div class="grid sm:grid-cols-3 gap-4 mt-6">
+    <div class="grid sm:grid-cols-2 gap-4 mt-6">
       <div class="card p-5">
         <div class="text-lime-600 text-xl">①</div>
         <h3 class="mt-2 font-semibold">Format</h3>
-        <p class="text-sm text-zinc-600 mt-1">Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. 350 kelime sınırı (başlık ve yazar bilgileri hariç).</p>
+        <p class="text-sm text-zinc-600 mt-1">Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. <span id="ruleWordLimit">500</span> kelime sınırı (başlık ve yazar bilgileri hariç).</p>
       </div>
       <div class="card p-5">
         <div class="text-lime-600 text-xl">②</div>
         <h3 class="mt-2 font-semibold">İçerik</h3>
-        <p class="text-sm text-zinc-600 mt-1">Olgu sunumu/derleme/araştırma. Türkçe veya İngilizce yazılabilir. Tablo/şekil yerine açıklayıcı metin tercih edilir.</p>
-      </div>
-      <div class="card p-5">
-        <div class="text-lime-600 text-xl">③</div>
-        <h3 class="mt-2 font-semibold">Etik</h3>
-        <p class="text-sm text-zinc-600 mt-1">Kişisel sağlık verisi paylaşılmamalı. İnsan/hayvan çalışmalarında etik kurul onayı belirtilmelidir.</p>
+        <p class="text-sm text-zinc-600 mt-1">Olgu sunumu, derleme veya araştırma niteliğinde olabilir. Türkçe yazılır. Tablo ve şekil yerine açıklayıcı metin tercih edilir.</p>
       </div>
     </div>
   </section>
@@ -129,7 +121,7 @@
         <!-- 2) Yazarlar -->
         <fieldset class="space-y-3 form-section" data-section="authors">
           <legend class="section-legend text-sm font-semibold text-zinc-900">Yazarlar</legend>
-          <p class="helper">En az bir yazar zorunludur. Sunan yazarı işaretleyin. Kurum numarasını yazar yanına ekleyin (alttaki kurum listesi ile eşleşir).</p>
+          <p class="helper">En az bir yazar zorunludur. Sunan yazarı işaretleyin. <strong>Kurum no</strong> seçimi, aşağıdaki <em>Kurumlar</em> listesindeki sıraya karşılık gelir (1. kurum için 1, 2. kurum için 2, vb.).</p>
           <div id="authorList" class="space-y-2"></div>
           <button type="button" id="addAuthorBtn" class="btn btn-ghost btn-sm">+ Yazar ekle</button>
         </fieldset>
@@ -139,7 +131,7 @@
         <!-- 3) Kurumlar -->
         <fieldset class="space-y-3 form-section" data-section="affiliations">
           <legend class="section-legend text-sm font-semibold text-zinc-900">Kurumlar</legend>
-          <p class="helper">Her kurum tek satırda. Yazarlar yanında parantez içinde 1, 2 gibi numaralar bu sıraya karşılık gelir.</p>
+          <p class="helper">Her kurum tek satırda. Buradaki sıralama (1, 2, 3, ...) yukarıdaki <em>Yazarlar</em> bölümünde her yazarın yanında seçtiğiniz <strong>Kurum no</strong> ile eşleşir. En fazla 10 kurum eklenebilir.</p>
           <div id="affList" class="space-y-2"></div>
           <button type="button" id="addAffBtn" class="btn btn-ghost btn-sm">+ Kurum ekle</button>
         </fieldset>
@@ -165,8 +157,8 @@
             <label class="label" for="abstract">Bildiri özeti (Giriş — Olgu/Yöntem — Bulgular — Tartışma) <span class="text-rose-500">*</span></label>
             <textarea id="abstract" name="abstract" class="field" required placeholder="Olgu sunumunuzun veya çalışmanızın özetini buraya yazın..."></textarea>
             <div class="flex items-center justify-between mt-2">
-              <span class="text-xs text-zinc-500"><span id="wordCount">0</span> / <span id="wordLimit">350</span> kelime</span>
-              <span id="wordHint" class="text-xs text-zinc-500">Hedef: 250–350 kelime</span>
+              <span class="text-xs text-zinc-500"><span id="wordCount">0</span> / <span id="wordLimit">500</span> kelime</span>
+              <span id="wordHint" class="text-xs text-zinc-500">Hedef: 250–500 kelime</span>
             </div>
             <div id="counterBar" class="counter-bar"><div style="width:0%"></div></div>
           </div>
@@ -182,12 +174,12 @@
         <fieldset class="space-y-3 form-section" data-section="declaration">
           <legend class="section-legend text-sm font-semibold text-zinc-900">Beyan</legend>
           <label class="flex items-start gap-3 text-sm text-zinc-700">
-            <input id="ethicsAck" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" required />
-            <span>Bu çalışmanın etik kurallara uygun yürütüldüğünü ve gerekli durumlarda etik kurul onayı bulunduğunu beyan ederim.</span>
+            <input id="ackNoWithdraw" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" required />
+            <span>Derneğimiz kurallarına göre bir çalışma bu toplantıya sunulmak üzere kabul edildikten sonra geri çekilemez ve bildiri özetleri (bildiri özet kitabı ve/veya web sayfası) arasında yerini alır. Kullanıcı (bildiri sahibi ve/veya yazarı) bu koşulu bildiri kabul tarihi itibariyle kabul etmiş sayılır.</span>
           </label>
           <label class="flex items-start gap-3 text-sm text-zinc-700">
-            <input id="originalityAck" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" required />
-            <span>Bildirinin tüm yazarlardan onay alınmış özgün bir çalışma olduğunu beyan ederim.</span>
+            <input id="ackAttendance" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" required />
+            <span>Toplantı katılımı zorunludur. Toplantıya katılım yapmayanların posterleri özet kitabında "sunulmadı" ifadesi ile yer alır veya hiç yer almaz.</span>
           </label>
         </fieldset>
 
@@ -202,35 +194,22 @@
     </div>
   </section>
 
-  <!-- HAKKINDA -->
-  <section id="hakkinda" class="max-w-6xl mx-auto px-5 py-12">
-    <div class="grid lg:grid-cols-2 gap-8 items-center">
-      <div>
-        <h2 class="text-2xl font-semibold tracking-tight">Tek tıkla yönetim</h2>
-        <p class="text-zinc-600 mt-3">Tüm başvurular merkezi yönetim panelinden filtrelenebilir, kabul/ret edilebilir ve Word/Excel olarak dışa aktarılabilir.</p>
-        <ul class="mt-5 space-y-2 text-sm text-zinc-700">
-          <li>✓ Anlık arama ve filtreleme</li>
-          <li>✓ Rol bazlı erişim (Admin, Editör, Hakem)</li>
-          <li>✓ Tek tıkla DOCX bildiri çıktısı</li>
-          <li>✓ Toplu Excel raporu</li>
-          <li>✓ Mobil uyumlu, &lt;2sn yüklenme</li>
-        </ul>
-      </div>
-      <div class="card p-6">
-        <h3 class="font-semibold">Sık Sorulan Sorular</h3>
-        <details class="mt-4 group">
-          <summary class="cursor-pointer text-sm font-medium">Birden fazla bildiri gönderebilir miyim?</summary>
-          <p class="text-sm text-zinc-600 mt-2">Evet. Her başvurunuz ayrı bir bildiri numarası alır.</p>
-        </details>
-        <details class="mt-3 group">
-          <summary class="cursor-pointer text-sm font-medium">Başvurumu nasıl güncellerim?</summary>
-          <p class="text-sm text-zinc-600 mt-2">Bildiri numaranızla "Durumumu Sorgula" üzerinden güncel durumunuzu görebilirsiniz. Düzenleme talebiniz varsa <a class="link" href="mailto:sekreter@aid.org.tr">sekreter@aid.org.tr</a> ile iletişime geçin.</p>
-        </details>
-        <details class="mt-3 group">
-          <summary class="cursor-pointer text-sm font-medium">Hangi formatta gönderim alıyorsunuz?</summary>
-          <p class="text-sm text-zinc-600 mt-2">Yalnızca bu form. Word/PDF eki kabul edilmez.</p>
-        </details>
-      </div>
+  <!-- SSS -->
+  <section id="hakkinda" class="max-w-3xl mx-auto px-5 py-12">
+    <div class="card p-6">
+      <h3 class="font-semibold">Sık Sorulan Sorular</h3>
+      <details class="mt-4 group">
+        <summary class="cursor-pointer text-sm font-medium">Birden fazla bildiri gönderebilir miyim?</summary>
+        <p class="text-sm text-zinc-600 mt-2">Evet. Her başvurunuz ayrı bir bildiri numarası alır.</p>
+      </details>
+      <details class="mt-3 group">
+        <summary class="cursor-pointer text-sm font-medium">Başvurumu nasıl güncellerim?</summary>
+        <p class="text-sm text-zinc-600 mt-2">Bildiri numaranızla "Bildiri Sorgula" üzerinden güncel durumunuzu görebilirsiniz. Düzenleme talebiniz varsa <a class="link" href="mailto:sekreter@aid.org.tr">sekreter@aid.org.tr</a> ile iletişime geçin.</p>
+      </details>
+      <details class="mt-3 group">
+        <summary class="cursor-pointer text-sm font-medium">Hangi formatta gönderim alıyorsunuz?</summary>
+        <p class="text-sm text-zinc-600 mt-2">Yalnızca bu form. Word/PDF eki kabul edilmez.</p>
+      </details>
     </div>
   </section>
 

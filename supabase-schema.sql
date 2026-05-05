@@ -43,7 +43,7 @@ create table if not exists public.settings (
   event_title text not null,
   event_short text not null,
   organizer text not null,
-  word_limit int not null default 350,
+  word_limit int not null default 500,
   deadline date,
   submissions_open boolean not null default true,
   accent_color text default '#A3E635',
@@ -61,7 +61,7 @@ values (
   'Herediter Anjiyoödem ve İmmün Yetmezliklere Zor Olgularla Pratik Çözümler',
   'HAE & İmmün Yetmezlik Bildiri Sistemi',
   'Türkiye Ulusal Allerji ve Klinik İmmünoloji Derneği',
-  350,
+  500,
   '2026-09-30',
   true
 )

@@ -63,6 +63,8 @@
   document.getElementById('kpiCount').textContent = B.listSubmissions().length;
   document.getElementById('kpiLimit').textContent = settings.wordLimit;
   document.getElementById('wordLimit').textContent = settings.wordLimit;
+  const ruleWordLimit = document.getElementById('ruleWordLimit');
+  if (ruleWordLimit) ruleWordLimit.textContent = settings.wordLimit;
   if (settings.deadline) {
     const d = new Date(settings.deadline);
     document.getElementById('kpiDeadline').textContent = d.toLocaleDateString('tr-TR', {
@@ -78,9 +80,14 @@
     data = data || {};
     const wrap = document.createElement('div');
     wrap.className = 'author-chip flex-wrap';
+    let options = '<option value="">Kurum no</option>';
+    for (let i = 1; i <= 10; i++) {
+      const sel = String(data.affiliationIndex) === String(i) ? ' selected' : '';
+      options += '<option value="' + i + '"' + sel + '>' + i + '</option>';
+    }
     wrap.innerHTML =
-      '<input class="field flex-1 min-w-[200px]" placeholder="Ad Soyad" value="' + B.escapeHtml(data.fullName || '') + '" data-k="fullName" />' +
-      '<input class="field w-20" placeholder="Kurum #" value="' + B.escapeHtml(data.affiliationIndex || '') + '" data-k="affiliationIndex" />' +
+      '<input class="field flex-1 min-w-[200px]" placeholder="Yazarın Adı Soyadı" value="' + B.escapeHtml(data.fullName || '') + '" data-k="fullName" />' +
+      '<select class="field w-28" data-k="affiliationIndex" title="Kurum numarası — Kurumlar listesindeki sıraya karşılık gelir">' + options + '</select>' +
       '<label class="flex items-center gap-2 text-sm text-zinc-700"><input type="checkbox" data-k="presenter" ' + (data.presenter ? 'checked' : '') + ' class="h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" />Sunan</label>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-rm>Kaldır</button>';
     wrap.querySelector('[data-rm]').addEventListener('click', function () {
@@ -119,6 +126,10 @@
     authorList.appendChild(authorRow());
   });
   document.getElementById('addAffBtn').addEventListener('click', function () {
+    if (affList.children.length >= 10) {
+      alert('En fazla 10 kurum eklenebilir.');
+      return;
+    }
     affList.appendChild(affRow());
     renumberAff();
   });
@@ -200,8 +211,8 @@
       title: document.getElementById('title').value.trim(),
       abstract: document.getElementById('abstract').value.trim(),
       keywords: keywords,
-      ethicsAck: document.getElementById('ethicsAck').checked,
-      originalityAck: document.getElementById('originalityAck').checked
+      ackNoWithdraw: document.getElementById('ackNoWithdraw').checked,
+      ackAttendance: document.getElementById('ackAttendance').checked
     };
   }
 
@@ -229,8 +240,8 @@
     document.getElementById('title').value = d.title || '';
     document.getElementById('abstract').value = d.abstract || '';
     document.getElementById('keywords').value = (d.keywords || []).join(', ');
-    document.getElementById('ethicsAck').checked = !!d.ethicsAck;
-    document.getElementById('originalityAck').checked = !!d.originalityAck;
+    document.getElementById('ackNoWithdraw').checked = !!d.ackNoWithdraw;
+    document.getElementById('ackAttendance').checked = !!d.ackAttendance;
     (d.authors || []).forEach(function (a) { authorList.appendChild(authorRow(a)); });
     (d.affiliations || []).forEach(function (af) { affList.appendChild(affRow(af)); });
     renumberAff();
@@ -267,7 +278,7 @@
     if (wc < 50) return 'Özet en az 50 kelime olmalı.';
     if (d.keywords.length < 3) return 'En az 3 anahtar kelime giriniz.';
     if (d.keywords.length > 6) return 'En fazla 6 anahtar kelime giriniz.';
-    if (!d.ethicsAck || !d.originalityAck) return 'Beyanları onaylamanız gerekir.';
+    if (!d.ackNoWithdraw || !d.ackAttendance) return 'Her iki beyanı da onaylamanız gerekir.';
     return null;
   }
 
@@ -324,7 +335,7 @@
 
         '<div class="flex items-start gap-2 text-sm text-zinc-600">' +
           '<span class="text-emerald-600 mt-0.5">✓</span>' +
-          '<span>Etik kurallara uygunluk ve özgünlük beyanları onaylandı.</span>' +
+          '<span>Geri çekilemez ve katılım zorunluluğu beyanları onaylandı.</span>' +
         '</div>' +
       '</div>'
     );

@@ -43,24 +43,41 @@
     showLogin();
   }
 
-  document.getElementById('loginForm').addEventListener('submit', function (e) {
+  document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
     const u = document.getElementById('user').value.trim();
     const p = document.getElementById('pass').value;
-    const user = B.authenticate(u, p);
     const err = document.getElementById('loginErr');
-    if (!user) {
-      err.textContent = 'Kullanıcı adı veya şifre hatalı.';
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    const oldText = submitBtn.textContent;
+    submitBtn.textContent = 'Giriş yapılıyor...';
+    try {
+      const user = await Promise.resolve(B.authenticate(u, p));
+      if (!user || !user.username) {
+        err.textContent = 'Kullanıcı adı veya şifre hatalı. (Supabase modundaysanız e-posta ile giriş yapın.)';
+        err.classList.remove('hidden');
+        return;
+      }
+      err.classList.add('hidden');
+      B.setSession(user);
+      // Supabase modunda cache'in yüklenmesini bekle
+      if (window.BildiriBackend && window.BildiriBackend.mode === 'supabase' && window.BildiriBackend.refresh) {
+        try { await window.BildiriBackend.refresh(); } catch (e) { console.warn(e); }
+      }
+      showApp();
+    } catch (ex) {
+      console.error('Login error:', ex);
+      err.textContent = 'Giriş sırasında hata: ' + (ex.message || ex);
       err.classList.remove('hidden');
-      return;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = oldText;
     }
-    err.classList.add('hidden');
-    B.setSession(user);
-    showApp();
   });
 
-  document.getElementById('logoutBtn').addEventListener('click', function () {
-    B.clearSession();
+  document.getElementById('logoutBtn').addEventListener('click', async function () {
+    try { await Promise.resolve(B.clearSession()); } catch (e) {}
     document.getElementById('pass').value = '';
     showLogin();
   });

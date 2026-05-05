@@ -26,6 +26,10 @@
   const B = global.Bildiri;
 
   // ---- DB → Uygulama dönüştürücüleri ----
+  // Not: DB'de iki boolean kolon (ethics_ack, originality_ack) var — eski sürümle
+  // uyumluluk için isimleri korunuyor; UI'da yeni anlamlarla map'leniyor:
+  //   ethics_ack       ↔ ackNoWithdraw (geri çekilemez beyanı)
+  //   originality_ack  ↔ ackAttendance (katılım zorunluluğu beyanı)
   function rowToSub(r) {
     if (!r) return null;
     return {
@@ -41,8 +45,8 @@
       contactEmail: r.contact_email || '',
       contactPhone: r.contact_phone || '',
       contactInst: r.contact_inst || '',
-      ethicsAck: !!r.ethics_ack,
-      originalityAck: !!r.originality_ack,
+      ackNoWithdraw: !!r.ethics_ack,
+      ackAttendance: !!r.originality_ack,
       createdAt: r.created_at,
       updatedAt: r.updated_at
     };
@@ -59,8 +63,8 @@
       contact_email: s.contactEmail || '',
       contact_phone: s.contactPhone || '',
       contact_inst: s.contactInst || '',
-      ethics_ack: !!s.ethicsAck,
-      originality_ack: !!s.originalityAck,
+      ethics_ack: !!s.ackNoWithdraw,
+      originality_ack: !!s.ackAttendance,
       status: s.status || 'pending',
       status_note: s.statusNote || ''
     };
