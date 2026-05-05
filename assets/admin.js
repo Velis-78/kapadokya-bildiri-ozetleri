@@ -154,6 +154,24 @@
     activateTab('submissions');
     setTimeout(function () { window.print(); }, 100);
   });
+  document.getElementById('qa-export-book-accepted').addEventListener('click', function () {
+    const accepted = B.listSubmissions().filter(function (s) { return s.status === 'accepted'; });
+    if (!accepted.length) {
+      if (!confirm('Henüz kabul edilmiş bildiri yok. Yine de boş bir kitap iskeleti üretilsin mi?')) return;
+    }
+    // Bildiri no'ya göre sırala (BLD-1001, BLD-1002 ...)
+    accepted.sort(function (a, b) { return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }); });
+    E.exportBookDocx(accepted);
+    showToast('Bildiri kitabı (kabul edilenler) hazırlanıyor...', 'ok');
+  });
+  document.getElementById('qa-export-book-all').addEventListener('click', function () {
+    if (!confirm('Tüm bildiriler (beklemede ve ret olanlar dahil) taslak kitaba dahil edilecek. Devam edilsin mi?')) return;
+    const all = B.listSubmissions().slice().sort(function (a, b) {
+      return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true });
+    });
+    E.exportBookDocx(all);
+    showToast('Taslak bildiri kitabı (tümü) hazırlanıyor...', 'ok');
+  });
 
   // ---- Submissions ----
   let cachedFiltered = [];
@@ -263,6 +281,14 @@
   document.getElementById('exportFilteredXlsx').addEventListener('click', function () {
     if (!cachedFiltered.length) { showToast('Liste boş.', 'err'); return; }
     E.exportAllXlsx(cachedFiltered, 'filtreli_bildiriler.xlsx');
+  });
+  document.getElementById('exportFilteredBook').addEventListener('click', function () {
+    if (!cachedFiltered.length) { showToast('Liste boş.', 'err'); return; }
+    const sorted = cachedFiltered.slice().sort(function (a, b) {
+      return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true });
+    });
+    E.exportBookDocx(sorted);
+    showToast('Filtreli bildiri kitabı hazırlanıyor...', 'ok');
   });
 
   // Cmd/Ctrl+F → arama kutusuna odakla
