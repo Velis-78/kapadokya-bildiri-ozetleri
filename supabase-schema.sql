@@ -47,9 +47,13 @@ create table if not exists public.settings (
   deadline date,
   submissions_open boolean not null default true,
   accent_color text default '#A3E635',
+  form_sections_order text[] default array['contact','authors','affiliations','title','abstract','declaration']::text[],
   updated_at timestamptz not null default now(),
   constraint settings_singleton check (id = 1)
 );
+
+-- Eski kurulumlar için: kolon yoksa ekle
+alter table public.settings add column if not exists form_sections_order text[] default array['contact','authors','affiliations','title','abstract','declaration']::text[];
 
 insert into public.settings (id, event_title, event_short, organizer, word_limit, deadline, submissions_open)
 values (

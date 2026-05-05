@@ -8,9 +8,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="assets/style.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2384cc16'/%3E%3Ctext x='50' y='66' text-anchor='middle' font-family='Arial' font-size='52' font-weight='700' fill='%231a2e05'%3EA%3C/text%3E%3C/svg%3E" />
-  <script src="https://unpkg.com/docx@8.5.0/build/index.umd.min.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -223,6 +223,15 @@
             <button class="btn btn-primary" type="submit">Ayarları kaydet</button>
           </div>
         </form>
+
+        <div class="divider"></div>
+        <h3 class="font-semibold">Form Bölüm Sıralaması</h3>
+        <p class="text-sm text-zinc-600 mt-1">Başvuru formunun bölümlerini istediğiniz sıraya getirin. ↑ ve ↓ butonlarıyla taşıyın, <strong>Kaydet</strong>'e basın.</p>
+        <ul id="sectionOrderList" class="mt-4 space-y-2"></ul>
+        <div class="flex justify-end gap-2 mt-3">
+          <button id="resetSectionOrder" class="btn btn-ghost btn-sm">Varsayılana dön</button>
+          <button id="saveSectionOrder" class="btn btn-primary btn-sm">Sıralamayı Kaydet</button>
+        </div>
 
         <div class="divider"></div>
         <h3 class="font-semibold">Veri yönetimi</h3>

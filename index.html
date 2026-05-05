@@ -102,8 +102,8 @@
 
       <form id="submissionForm" class="mt-6 space-y-6" novalidate>
         <!-- 1) İletişim -->
-        <fieldset class="space-y-4">
-          <legend class="text-sm font-semibold text-zinc-900">1. İletişim Bilgileri</legend>
+        <fieldset class="space-y-4 form-section" data-section="contact">
+          <legend class="section-legend text-sm font-semibold text-zinc-900">İletişim Bilgileri</legend>
           <div class="grid sm:grid-cols-2 gap-4">
             <div>
               <label class="label" for="contactName">Ad Soyad <span class="text-rose-500">*</span></label>
@@ -127,8 +127,8 @@
         <div class="divider"></div>
 
         <!-- 2) Yazarlar -->
-        <fieldset class="space-y-3">
-          <legend class="text-sm font-semibold text-zinc-900">2. Yazarlar</legend>
+        <fieldset class="space-y-3 form-section" data-section="authors">
+          <legend class="section-legend text-sm font-semibold text-zinc-900">Yazarlar</legend>
           <p class="helper">En az bir yazar zorunludur. Sunan yazarı işaretleyin. Kurum numarasını yazar yanına ekleyin (alttaki kurum listesi ile eşleşir).</p>
           <div id="authorList" class="space-y-2"></div>
           <button type="button" id="addAuthorBtn" class="btn btn-ghost btn-sm">+ Yazar ekle</button>
@@ -137,8 +137,8 @@
         <div class="divider"></div>
 
         <!-- 3) Kurumlar -->
-        <fieldset class="space-y-3">
-          <legend class="text-sm font-semibold text-zinc-900">3. Kurumlar</legend>
+        <fieldset class="space-y-3 form-section" data-section="affiliations">
+          <legend class="section-legend text-sm font-semibold text-zinc-900">Kurumlar</legend>
           <p class="helper">Her kurum tek satırda. Yazarlar yanında parantez içinde 1, 2 gibi numaralar bu sıraya karşılık gelir.</p>
           <div id="affList" class="space-y-2"></div>
           <button type="button" id="addAffBtn" class="btn btn-ghost btn-sm">+ Kurum ekle</button>
@@ -147,8 +147,8 @@
         <div class="divider"></div>
 
         <!-- 4) Başlık -->
-        <fieldset class="space-y-3">
-          <legend class="text-sm font-semibold text-zinc-900">4. Bildiri Başlığı</legend>
+        <fieldset class="space-y-3 form-section" data-section="title">
+          <legend class="section-legend text-sm font-semibold text-zinc-900">Bildiri Başlığı</legend>
           <div>
             <label class="label" for="title">Başlık <span class="text-rose-500">*</span></label>
             <input id="title" name="title" class="field" required maxlength="220" placeholder="örn. C1-İnhibitör Eksikliğine Bağlı Tekrarlayan Anjiyoödem Atağı: Tanı ve Yönetim" />
@@ -159,8 +159,8 @@
         <div class="divider"></div>
 
         <!-- 5) Özet -->
-        <fieldset class="space-y-3">
-          <legend class="text-sm font-semibold text-zinc-900">5. Özet</legend>
+        <fieldset class="space-y-3 form-section" data-section="abstract">
+          <legend class="section-legend text-sm font-semibold text-zinc-900">Özet</legend>
           <div>
             <label class="label" for="abstract">Bildiri özeti (Giriş — Olgu/Yöntem — Bulgular — Tartışma) <span class="text-rose-500">*</span></label>
             <textarea id="abstract" name="abstract" class="field" required placeholder="Olgu sunumunuzun veya çalışmanızın özetini buraya yazın..."></textarea>
@@ -179,8 +179,8 @@
         <div class="divider"></div>
 
         <!-- 6) Beyan -->
-        <fieldset class="space-y-3">
-          <legend class="text-sm font-semibold text-zinc-900">6. Beyan</legend>
+        <fieldset class="space-y-3 form-section" data-section="declaration">
+          <legend class="section-legend text-sm font-semibold text-zinc-900">Beyan</legend>
           <label class="flex items-start gap-3 text-sm text-zinc-700">
             <input id="ethicsAck" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" required />
             <span>Bu çalışmanın etik kurallara uygun yürütüldüğünü ve gerekli durumlarda etik kurul onayı bulunduğunu beyan ederim.</span>
@@ -263,6 +263,33 @@
         <button id="statusQueryBtn" class="btn btn-accent">Sorgula</button>
       </div>
       <div id="statusResult" class="mt-5"></div>
+    </div>
+  </div>
+
+  <!-- SON KONTROL (REVIEW) MODALI -->
+  <div id="reviewModal" class="modal-backdrop hidden">
+    <div class="modal p-0">
+      <div class="px-6 py-4 border-b border-zinc-200 flex items-center justify-between sticky top-0 bg-white z-10">
+        <div>
+          <h3 class="font-semibold">Son Kontrol</h3>
+          <p class="text-xs text-zinc-500 mt-0.5">Bilgilerinizi gözden geçirin.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" data-close>Kapat</button>
+      </div>
+
+      <div class="px-6 py-3 bg-amber-50 border-b border-amber-200 flex items-start gap-3">
+        <span class="text-amber-700 text-lg leading-none mt-0.5">⚠</span>
+        <p class="text-sm text-amber-900">
+          <strong>Lütfen son kontrollerinizi yapınız.</strong> Bildirinizi gönderdikten sonra düzenleme yapamayacaksınız. Yanlışlık varsa <em>"Düzenlemeye Dön"</em> butonu ile geri dönüp düzeltin.
+        </p>
+      </div>
+
+      <div id="reviewBody" class="p-6"></div>
+
+      <div class="px-6 py-4 border-t border-zinc-200 flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sticky bottom-0 bg-white">
+        <button id="reviewBackBtn" class="btn btn-ghost">Düzenlemeye Dön</button>
+        <button id="reviewConfirmBtn" class="btn btn-accent">Onayla ve Gönder</button>
+      </div>
     </div>
   </div>
 
