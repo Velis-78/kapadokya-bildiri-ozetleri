@@ -229,18 +229,33 @@
       rule_content_text: patch.ruleContentText
     };
     Object.keys(dbPatch).forEach(function (k) { if (dbPatch[k] === undefined) delete dbPatch[k]; });
-    const { data, error } = await sb.from('settings').update(dbPatch).eq('id', 1).select().single();
-    if (error) { console.error(error); throw new Error('Ayarlar güncellenemedi.'); }
+    // .single() yerine select() — eğer RLS UPDATE'i bloke ederse 0 row döner ama hata vermez
+    const { data, error } = await sb.from('settings').update(dbPatch).eq('id', 1).select();
+    if (error) {
+      console.error('[updateSettings] error:', error);
+      throw new Error('Ayarlar güncellenemedi: ' + (error.message || error.code || 'bilinmeyen hata'));
+    }
+    if (!data || data.length === 0) {
+      throw new Error(
+        'Yetki Hatası: Settings güncelleme yetkisi yok. ' +
+        'Olası nedenler:\n' +
+        '1) Yönetici hesabınız "super" rolüne sahip değil\n' +
+        '2) is_super_admin() fonksiyonu düzgün çalışmıyor\n' +
+        '3) Settings tablosunda satır yok\n\n' +
+        'Çözüm: Supabase SQL Editor\'de README\'deki "Settings yetki sorunu" sorgusunu çalıştırın.'
+      );
+    }
+    const row = data[0];
     cache.settings = {
-      eventTitle: data.event_title,
-      eventShort: data.event_short,
-      organizer: data.organizer,
-      wordLimit: data.word_limit,
-      deadline: data.deadline,
-      submissionsOpen: data.submissions_open,
-      formSectionsOrder: data.form_sections_order || ['contact','authors','affiliations','title','abstract','declaration'],
-      ruleFormatText: data.rule_format_text,
-      ruleContentText: data.rule_content_text
+      eventTitle: row.event_title,
+      eventShort: row.event_short,
+      organizer: row.organizer,
+      wordLimit: row.word_limit,
+      deadline: row.deadline,
+      submissionsOpen: row.submissions_open,
+      formSectionsOrder: row.form_sections_order || ['contact','authors','affiliations','title','abstract','declaration'],
+      ruleFormatText: row.rule_format_text,
+      ruleContentText: row.rule_content_text
     };
     dispatchChange();
     return cache.settings;
