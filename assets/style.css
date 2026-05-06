@@ -256,7 +256,7 @@ label.label {
 }
 
 /* ============================================================
-   TinyMCE 7 entegrasyonu
+   Quill 2.0 entegrasyonu
    ============================================================ */
 .editor-wrap {
   border: 1px solid var(--line);
@@ -269,20 +269,56 @@ label.label {
   border-color: var(--accent-strong);
   box-shadow: 0 0 0 4px rgba(132, 204, 22, 0.15);
 }
-/* TinyMCE iframe ve toolbar köşeleri */
-.editor-wrap .tox-tinymce {
+.editor-wrap .ql-toolbar {
   border: none !important;
+  border-bottom: 1px solid var(--line) !important;
+  background: var(--surface-2);
   border-radius: 0 !important;
 }
-.editor-wrap .tox.tox-tinymce {
+.editor-wrap .ql-container {
   border: none !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif !important;
+  font-size: 15px;
+  min-height: 320px;
 }
-/* TinyMCE üst notification banner'ını gizle (no-api-key uyarısı) */
-.tox-notifications-container {
-  display: none !important;
+.editor-wrap .ql-editor {
+  min-height: 320px;
+  max-height: 700px;
+  line-height: 1.65;
+  padding: 14px 18px;
 }
-.tox-statusbar__branding {
-  display: none !important;
+.editor-wrap .ql-editor.ql-blank::before {
+  font-style: normal;
+  color: var(--ink-3);
+}
+.editor-wrap .ql-editor table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.6em 0;
+}
+.editor-wrap .ql-editor td,
+.editor-wrap .ql-editor th {
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  vertical-align: top;
+}
+.editor-wrap .ql-editor th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+.editor-wrap .ql-editor blockquote {
+  border-left: 3px solid var(--accent);
+  padding: 0.4em 1em;
+  color: var(--ink-2);
+  font-style: italic;
+}
+.editor-wrap .ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+.editor-wrap .ql-snow .ql-table-custom {
+  width: 28px;
 }
 
 /* ============================================================
