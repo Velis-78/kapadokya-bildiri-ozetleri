@@ -7,6 +7,11 @@
   const B = window.Bildiri;
   const E = window.BildiriExport;
 
+  // ---- Modül-seviyesi state (TDZ'den korunmak için en üstte) ----
+  // Bu değişkenler `let` ile tanımlı; ilk çağrılan fonksiyonların onlara
+  // erişebilmesi için tüm fonksiyon tanımlarından önce burada yer alır.
+  let cachedFiltered = [];
+
   // ---- Genel ----
   const settings = B.getSettings();
   document.getElementById('loginEvent').textContent = settings.eventShort;
@@ -194,7 +199,7 @@
   });
 
   // ---- Submissions ----
-  let cachedFiltered = [];
+  // (cachedFiltered yukarıda en üstte tanımlandı — TDZ'den korunmak için)
 
   function applyFilter() {
     const txt = (document.getElementById('filterText').value || '').toLocaleLowerCase('tr-TR').trim();
