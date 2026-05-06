@@ -256,7 +256,7 @@ label.label {
 }
 
 /* ============================================================
-   CKEditor 5 entegrasyonu
+   TinyMCE 7 entegrasyonu
    ============================================================ */
 .editor-wrap {
   border: 1px solid var(--line);
@@ -269,31 +269,20 @@ label.label {
   border-color: var(--accent-strong);
   box-shadow: 0 0 0 4px rgba(132, 204, 22, 0.15);
 }
-.ck.ck-editor__editable_inline {
-  min-height: 320px !important;
-  max-height: 700px;
+/* TinyMCE iframe ve toolbar köşeleri */
+.editor-wrap .tox-tinymce {
   border: none !important;
-  padding: 14px 18px !important;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif !important;
-  font-size: 15px;
-  line-height: 1.65;
-}
-.ck.ck-editor__editable_inline:focus {
-  border: none !important;
-  box-shadow: none !important;
-}
-.ck.ck-toolbar {
-  border: none !important;
-  border-bottom: 1px solid var(--line) !important;
   border-radius: 0 !important;
-  background: var(--surface-2) !important;
 }
-.ck.ck-content {
-  background: var(--surface) !important;
+.editor-wrap .tox.tox-tinymce {
+  border: none !important;
 }
-.ck.ck-content blockquote {
-  border-left: 3px solid var(--accent) !important;
-  font-style: italic;
+/* TinyMCE üst notification banner'ını gizle (no-api-key uyarısı) */
+.tox-notifications-container {
+  display: none !important;
+}
+.tox-statusbar__branding {
+  display: none !important;
 }
 
 /* ============================================================

@@ -1,17 +1,18 @@
 /* ============================================================
-   Bildiri Sistemi — CKEditor 5 sarıcı
+   Bildiri Sistemi — Rich Text Editör (TinyMCE 7)
    ------------------------------------------------------------
-   Görsel: Supabase Storage 'posters-media' bucket'ına yüklenir.
-   Word/Google Docs kopyala-yapıştır: PasteFromOffice ile korunur.
-   Kelime sayacı: HTML etiketleri çıkarılarak yapılır.
+   - Görsel: Supabase Storage 'posters-media' bucket'ına yüklenir
+   - Word/Google Docs paste: TinyMCE'in PowerPaste benzeri yeteneği ile
+   - Kelime sayacı: HTML strip sonrası plain text üzerinden
    ============================================================ */
 (function (global) {
   'use strict';
 
+  // ---------- Supabase Storage yükleyici ----------
   function uploadFileToSupabase(file) {
     var sb = global.BildiriBackend && global.BildiriBackend.client;
     if (!sb) {
-      // Storage yoksa (LocalStorage modu) — base64 data URL döndür (fallback)
+      // Storage yoksa (LocalStorage modu) — fallback: data URL
       return new Promise(function (resolve, reject) {
         var r = new FileReader();
         r.onload = function () { resolve(r.result); };
@@ -30,31 +31,11 @@
         console.error('[Bildiri] Storage upload error:', res.error);
         throw new Error(res.error.message || 'Görsel yüklenemedi.');
       }
-      var pub = sb.storage.from('posters-media').getPublicUrl(fname);
-      return pub.data.publicUrl;
+      return sb.storage.from('posters-media').getPublicUrl(fname).data.publicUrl;
     });
   }
 
-  // CKEditor 5 Upload Adapter
-  function SupabaseUploadAdapter(loader) {
-    this.loader = loader;
-  }
-  SupabaseUploadAdapter.prototype.upload = function () {
-    return this.loader.file.then(function (file) {
-      return uploadFileToSupabase(file).then(function (url) {
-        return { default: url };
-      });
-    });
-  };
-  SupabaseUploadAdapter.prototype.abort = function () {};
-
-  function SupabaseUploadAdapterPlugin(editor) {
-    editor.plugins.get('FileRepository').createUploadAdapter = function (loader) {
-      return new SupabaseUploadAdapter(loader);
-    };
-  }
-
-  // ---- HTML → Plain text (kelime sayacı için) ----
+  // ---------- HTML → Plain text ----------
   function getPlainText(html) {
     var div = document.createElement('div');
     div.innerHTML = html || '';
@@ -67,87 +48,117 @@
 
   function countWords(html) {
     var t = getPlainText(html);
-    if (!t) return 0;
-    return t.split(/\s+/).filter(Boolean).length;
+    return t ? t.split(/\s+/).filter(Boolean).length : 0;
   }
 
-  // ---- Editor init ----
+  // ---------- Editor başlatma ----------
   function init(elementOrId, options) {
     options = options || {};
-    if (!global.ClassicEditor) {
-      console.error('[Bildiri] CKEditor 5 yüklenemedi (ClassicEditor undefined).');
-      return Promise.reject(new Error('CKEditor 5 yüklenmedi'));
+    if (!global.tinymce) {
+      console.error('[Bildiri] TinyMCE yüklenmedi.');
+      return Promise.reject(new Error('TinyMCE yüklenmedi'));
     }
     var element = typeof elementOrId === 'string'
       ? document.getElementById(elementOrId)
       : elementOrId;
-    if (!element) return Promise.reject(new Error('Editör elementi bulunamadı'));
+    if (!element) return Promise.reject(new Error('Element bulunamadı: ' + elementOrId));
 
-    var config = {
-      extraPlugins: [SupabaseUploadAdapterPlugin],
-      toolbar: {
-        items: [
-          'heading', '|',
-          'bold', 'italic', 'underline', 'strikethrough', '|',
-          'bulletedList', 'numberedList', '|',
-          'outdent', 'indent', '|',
-          'link', 'imageUpload', 'insertTable', 'blockQuote', '|',
-          'undo', 'redo'
-        ],
-        shouldNotGroupWhenFull: false
-      },
-      heading: {
-        options: [
-          { model: 'paragraph', title: 'Paragraf', class: 'ck-heading_paragraph' },
-          { model: 'heading2', view: 'h2', title: 'Alt Başlık', class: 'ck-heading_heading2' },
-          { model: 'heading3', view: 'h3', title: 'Küçük Başlık', class: 'ck-heading_heading3' }
-        ]
-      },
-      table: {
-        contentToolbar: [
-          'tableColumn', 'tableRow', 'mergeTableCells',
-          'tableCellProperties', 'tableProperties'
-        ]
-      },
-      image: {
-        toolbar: [
-          'imageStyle:inline', 'imageStyle:block', 'imageStyle:side', '|',
-          'toggleImageCaption', 'imageTextAlternative'
-        ],
-        styles: {
-          options: ['inline', 'block', 'side']
-        }
-      },
-      link: {
-        addTargetToExternalLinks: true,
-        defaultProtocol: 'https://'
-      },
-      placeholder: options.placeholder ||
-        'Bildirinizi buraya yazın. Word/Google Docs\'tan tablo, resim ve formatlı metni doğrudan yapıştırabilirsiniz.',
-      language: 'tr'
-    };
-
-    return global.ClassicEditor.create(element, config).then(function (editor) {
-      // Word count
-      if (typeof options.onWordCount === 'function') {
-        var emit = function () {
-          try {
-            var html = editor.getData();
-            options.onWordCount(countWords(html), getPlainText(html).length, html);
-          } catch (e) { /* */ }
-        };
-        editor.model.document.on('change:data', emit);
-        setTimeout(emit, 80);
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      try {
+        global.tinymce.init({
+          target: element,
+          height: 480,
+          menubar: false,
+          branding: false,
+          promotion: false,
+          statusbar: true,
+          elementpath: false,
+          resize: true,
+          language: 'tr',
+          plugins: 'advlist autolink lists link image charmap searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
+          toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | indent outdent | link image table | removeformat | code',
+          toolbar_mode: 'sliding',
+          paste_data_images: true,
+          automatic_uploads: true,
+          smart_paste: true,
+          paste_block_drop: false,
+          // Word/Google Docs uyumluluğu
+          paste_merge_formats: true,
+          paste_remove_styles_if_webkit: false,
+          paste_webkit_styles: 'all',
+          // Görsel yükleme: Supabase Storage'a
+          images_upload_handler: function (blobInfo, progress) {
+            return new Promise(function (res, rej) {
+              uploadFileToSupabase(blobInfo.blob())
+                .then(res)
+                .catch(function (e) { rej(e.message || String(e)); });
+            });
+          },
+          file_picker_types: 'image',
+          // İçerik CSS — editör içinde prose benzeri görünüm
+          content_style: [
+            'body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;font-size:15px;line-height:1.65;color:#0a0a0a;padding:8px 14px;}',
+            'p{margin:0.6em 0}',
+            'table{border-collapse:collapse;width:100%;margin:1em 0}',
+            'table td,table th{border:1px solid #e4e4e7;padding:8px 10px;vertical-align:top}',
+            'table th{background:#f4f4f5;font-weight:600}',
+            'img{max-width:100%;height:auto;border-radius:6px}',
+            'blockquote{border-left:3px solid #84cc16;padding:0.4em 1em;color:#525252;font-style:italic;margin:1em 0}'
+          ].join(''),
+          placeholder: options.placeholder || 'Bildirinizi buraya yazın. Word/Google Docs\'tan tablo, resim ve formatlı metni doğrudan yapıştırabilirsiniz.',
+          setup: function (editor) {
+            editor.on('init', function () {
+              if (options.initialData) {
+                editor.setContent(options.initialData);
+              }
+              if (typeof options.onWordCount === 'function') {
+                var emit = function () {
+                  try {
+                    var html = editor.getContent();
+                    options.onWordCount(countWords(html), getPlainText(html).length, html);
+                  } catch (e) { /* */ }
+                };
+                editor.on('input keyup change SetContent NodeChange', emit);
+                setTimeout(emit, 80);
+              }
+              if (!settled) {
+                settled = true;
+                resolve(makeEditorInterface(editor));
+              }
+            });
+            editor.on('LoadError', function (err) {
+              console.error('[Bildiri] TinyMCE LoadError:', err);
+              if (!settled) { settled = true; reject(err); }
+            });
+          }
+        }).catch(function (err) {
+          console.error('[Bildiri] TinyMCE init error:', err);
+          if (!settled) { settled = true; reject(err); }
+        });
+      } catch (err) {
+        console.error('[Bildiri] TinyMCE try-catch:', err);
+        if (!settled) { settled = true; reject(err); }
       }
-      // İlk değer
-      if (options.initialData) {
-        editor.setData(options.initialData);
-      }
-      return editor;
-    }).catch(function (err) {
-      console.error('[Bildiri] Editör başlatılamadı:', err);
-      throw err;
     });
+  }
+
+  // CKEditor uyumlu API arabirimi (kod paylaşımı için)
+  function makeEditorInterface(editor) {
+    return {
+      // İçerik al/set
+      getData: function () { return editor.getContent(); },
+      setData: function (html) { editor.setContent(html || ''); },
+      // Kapatma
+      destroy: function () {
+        try { editor.remove(); } catch (e) { /* */ }
+        return Promise.resolve();
+      },
+      // Plain text
+      getPlainText: function () { return getPlainText(editor.getContent()); },
+      // Düşük seviye erişim
+      _editor: editor
+    };
   }
 
   global.BildiriEditor = {
