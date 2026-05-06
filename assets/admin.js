@@ -159,10 +159,9 @@
     if (!accepted.length) {
       if (!confirm('Henüz kabul edilmiş bildiri yok. Yine de boş bir kitap iskeleti üretilsin mi?')) return;
     }
-    // Bildiri no'ya göre sırala (BLD-1001, BLD-1002 ...)
     accepted.sort(function (a, b) { return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }); });
     E.exportBookDocx(accepted);
-    showToast('Bildiri kitabı (kabul edilenler) hazırlanıyor...', 'ok');
+    showToast('DOCX kitap hazırlanıyor (düz metin)...', 'ok');
   });
   document.getElementById('qa-export-book-all').addEventListener('click', function () {
     if (!confirm('Tüm bildiriler (beklemede ve ret olanlar dahil) taslak kitaba dahil edilecek. Devam edilsin mi?')) return;
@@ -170,7 +169,28 @@
       return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true });
     });
     E.exportBookDocx(all);
-    showToast('Taslak bildiri kitabı (tümü) hazırlanıyor...', 'ok');
+    showToast('Taslak DOCX kitap hazırlanıyor...', 'ok');
+  });
+  // PDF — kabul edilenler
+  document.getElementById('qa-export-book-pdf').addEventListener('click', function () {
+    const accepted = B.listSubmissions().filter(function (s) { return s.status === 'accepted'; });
+    if (!accepted.length) {
+      alert('Henüz kabul edilmiş bildiri yok. Önce bildirileri kabul edin.');
+      return;
+    }
+    accepted.sort(function (a, b) { return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }); });
+    showToast('PDF kitap hazırlanıyor — büyük kitaplarda 30 saniyeyi bulabilir...', 'ok');
+    E.exportBookPdf(accepted);
+  });
+  // PDF — tümü (taslak)
+  document.getElementById('qa-export-book-pdf-all').addEventListener('click', function () {
+    if (!confirm('Tüm bildiriler taslak PDF kitaba dahil edilecek. Devam edilsin mi?')) return;
+    const all = B.listSubmissions().slice().sort(function (a, b) {
+      return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true });
+    });
+    if (!all.length) { alert('Henüz bildiri yok.'); return; }
+    showToast('Taslak PDF kitap hazırlanıyor...', 'ok');
+    E.exportBookPdf(all);
   });
 
   // ---- Submissions ----
@@ -226,7 +246,8 @@
           '<td class="text-right">' +
             '<div class="flex justify-end gap-1">' +
               '<button class="btn btn-ghost btn-sm" data-open="' + s.id + '">Aç</button>' +
-              '<button class="btn btn-ghost btn-sm" data-docx="' + s.id + '">DOCX</button>' +
+              '<button class="btn btn-ghost btn-sm" data-pdf="' + s.id + '" title="PDF — formatlar, tablo, görseller korunur">PDF</button>' +
+              '<button class="btn btn-ghost btn-sm" data-docx="' + s.id + '" title="DOCX — düz metin">DOCX</button>' +
               '<button class="btn btn-ghost btn-sm" data-quick-accept="' + s.id + '" title="Hızlı kabul">✓</button>' +
               '<button class="btn btn-ghost btn-sm" data-quick-reject="' + s.id + '" title="Hızlı ret">✕</button>' +
             '</div>' +
@@ -246,6 +267,15 @@
       b.addEventListener('click', function () {
         const s = B.getSubmission(b.getAttribute('data-docx'));
         if (s) E.exportSubmissionDocx(s);
+      });
+    });
+    Array.prototype.forEach.call(tbody.querySelectorAll('[data-pdf]'), function (b) {
+      b.addEventListener('click', function () {
+        const s = B.getSubmission(b.getAttribute('data-pdf'));
+        if (s) {
+          showToast('PDF hazırlanıyor...', 'ok');
+          E.exportSubmissionPdf(s);
+        }
       });
     });
     Array.prototype.forEach.call(tbody.querySelectorAll('[data-quick-accept]'), function (b) {
@@ -288,7 +318,15 @@
       return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true });
     });
     E.exportBookDocx(sorted);
-    showToast('Filtreli bildiri kitabı hazırlanıyor...', 'ok');
+    showToast('DOCX kitap (düz metin) hazırlanıyor...', 'ok');
+  });
+  document.getElementById('exportFilteredBookPdf').addEventListener('click', function () {
+    if (!cachedFiltered.length) { showToast('Liste boş.', 'err'); return; }
+    const sorted = cachedFiltered.slice().sort(function (a, b) {
+      return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true });
+    });
+    showToast('Filtreli PDF kitap hazırlanıyor...', 'ok');
+    E.exportBookPdf(sorted);
   });
 
   // Cmd/Ctrl+F → arama kutusuna odakla
@@ -339,7 +377,7 @@
         '</div>' +
         '<div id="d-abstract-preview" class="card-soft p-4 prose">' + safeAbstract + '</div>' +
         '<div id="d-abstract-edit" class="hidden">' +
-          '<div class="editor-wrap"><div id="d-abstract-editor"></div></div>' +
+          '<div class="editor-wrap"><textarea id="d-abstract-editor"></textarea></div>' +
           '<div class="text-xs text-zinc-500 mt-2">Word/Google Docs\'tan tablo, görsel ve formatlı metni doğrudan yapıştırabilirsiniz.</div>' +
         '</div>' +
       '</div>' +
@@ -366,8 +404,9 @@
 
       '<div class="flex flex-wrap items-center justify-between gap-3 mt-6">' +
         '<button class="btn btn-danger" id="d-delete">Sil</button>' +
-        '<div class="flex gap-2">' +
-          '<button class="btn btn-ghost" id="d-docx">Word olarak indir</button>' +
+        '<div class="flex gap-2 flex-wrap">' +
+          '<button class="btn btn-ghost" id="d-pdf" title="PDF — tablolar/görseller/formatlar korunur">📄 PDF</button>' +
+          '<button class="btn btn-ghost" id="d-docx" title="DOCX — düz metin">DOCX</button>' +
           '<button class="btn btn-ghost" data-close>İptal</button>' +
           '<button class="btn btn-accent" id="d-save">Kaydet</button>' +
         '</div>' +
@@ -423,6 +462,10 @@
       showToast('Bildiri silindi.', 'err');
     };
     document.getElementById('d-docx').onclick = function () { E.exportSubmissionDocx(s); };
+    document.getElementById('d-pdf').onclick = function () {
+      showToast('PDF hazırlanıyor...', 'ok');
+      E.exportSubmissionPdf(s);
+    };
   }
 
   function closeModal() {
@@ -590,7 +633,7 @@
         eventTitle: document.getElementById('setEvent').value.trim(),
         eventShort: document.getElementById('setShort').value.trim(),
         organizer: document.getElementById('setOrg').value.trim(),
-        wordLimit: Math.max(100, Math.min(2000, parseInt(document.getElementById('setLimit').value, 10) || 500)),
+        wordLimit: Math.max(100, Math.min(50000, parseInt(document.getElementById('setLimit').value, 10) || 5000)),
         deadline: document.getElementById('setDeadline').value,
         submissionsOpen: document.getElementById('setOpen').checked,
         ruleFormatText: document.getElementById('setRuleFormat').value,

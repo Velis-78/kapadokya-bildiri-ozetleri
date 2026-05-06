@@ -28,7 +28,7 @@
     eventTitle: 'Herediter Anjiyoödem ve İmmün Yetmezliklere Zor Olgularla Pratik Çözümler',
     eventShort: 'HAE & İmmün Yetmezlik Bildiri Sistemi',
     organizer: 'Türkiye Ulusal Allerji ve Klinik İmmünoloji Derneği',
-    wordLimit: 500,
+    wordLimit: 5000,
     deadline: '2026-09-30',
     submissionsOpen: true,
     accentColor: '#A3E635',

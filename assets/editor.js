@@ -68,10 +68,8 @@
       try {
         global.tinymce.init({
           target: element,
-          // GPL/Community Edition — API key gerektirmez, read-only mode'a düşmez
-          license_key: 'gpl',
-          // jsDelivr'dan self-hosted: skin/icon/plugin dosyaları aynı sürümden gelir
-          base_url: 'https://cdn.jsdelivr.net/npm/tinymce@7.6.1',
+          // jsDelivr'dan self-hosted TinyMCE 6 — community edition, read-only kısıtlaması yok
+          base_url: 'https://cdn.jsdelivr.net/npm/tinymce@6.8.5',
           suffix: '.min',
           height: 480,
           menubar: false,
@@ -113,6 +111,8 @@
           placeholder: options.placeholder || 'Bildirinizi buraya yazın. Word/Google Docs\'tan tablo, resim ve formatlı metni doğrudan yapıştırabilirsiniz.',
           setup: function (editor) {
             editor.on('init', function () {
+              // Read-only mode'u kesin kapat
+              editor.mode.set('design');
               if (options.initialData) {
                 editor.setContent(options.initialData);
               }

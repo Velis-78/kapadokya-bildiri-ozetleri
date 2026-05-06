@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tinymce@7.6.1/tinymce.min.js" referrerpolicy="origin"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tinymce@6.8.5/tinymce.min.js" referrerpolicy="origin"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
   <link rel="stylesheet" href="assets/style.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2384cc16'/%3E%3Ctext x='50' y='66' text-anchor='middle' font-family='Arial' font-size='56' font-weight='700' fill='%231a2e05'%3EB%3C/text%3E%3C/svg%3E" />
@@ -45,9 +45,9 @@
           <button id="checkStatusBtn" class="btn btn-ghost">Bildiri Sorgula</button>
           <a href="https://www.aid.org.tr/hao-kapadokya-2026/" target="_blank" rel="noopener" class="btn btn-ghost">Toplantı Programı ↗</a>
         </div>
-        <div class="mt-8 flex items-center gap-6 text-sm text-zinc-500">
+        <div class="mt-8 flex items-center gap-6 text-sm text-zinc-5000">
           <div><span class="font-semibold text-zinc-900" id="kpiCount">0</span> başvuru alındı</div>
-          <div>Kelime sınırı: <span class="font-semibold text-zinc-900" id="kpiLimit">500</span></div>
+          <div>Kelime sınırı: <span class="font-semibold text-zinc-900" id="kpiLimit">5000</span></div>
           <div class="hidden sm:block">Son başvuru: <span class="font-semibold text-zinc-900" id="kpiDeadline">—</span></div>
         </div>
       </div>
@@ -57,12 +57,12 @@
         <h3 class="font-semibold text-zinc-900">Tek bakışta süreç</h3>
         <ol class="mt-4 space-y-3 text-sm text-zinc-700">
           <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">1</span> Yazar ve kurum bilgilerini ekleyin</li>
-          <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">2</span> Başlık ve özeti yazın (500 kelime sınırı)</li>
+          <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">2</span> Başlık ve özeti yazın (5000 kelime sınırı)</li>
           <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">3</span> Anahtar kelimeleri girin</li>
           <li class="flex gap-3"><span class="w-6 h-6 rounded-full bg-lime-100 text-lime-700 inline-flex items-center justify-center text-xs font-bold">4</span> Onaylayın ve gönderin</li>
         </ol>
         <div class="divider"></div>
-        <p class="text-xs text-zinc-500">Başvuru numaranızla durumunuzu istediğiniz zaman sorgulayabilirsiniz.</p>
+        <p class="text-xs text-zinc-5000">Başvuru numaranızla durumunuzu istediğiniz zaman sorgulayabilirsiniz.</p>
       </aside>
     </div>
   </section>
@@ -74,7 +74,7 @@
       <div class="card p-5">
         <div class="text-lime-600 text-xl">①</div>
         <h3 class="mt-2 font-semibold">Format</h3>
-        <p id="ruleFormatText" class="text-sm text-zinc-600 mt-1">Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. 500 kelime sınırı (başlık ve yazar bilgileri hariç).</p>
+        <p id="ruleFormatText" class="text-sm text-zinc-600 mt-1">Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. 5000 kelime sınırı (başlık ve yazar bilgileri hariç).</p>
       </div>
       <div class="card p-5">
         <div class="text-lime-600 text-xl">②</div>
@@ -101,11 +101,11 @@
           <legend class="section-legend text-sm font-semibold text-zinc-900">İletişim Bilgileri</legend>
           <div class="grid sm:grid-cols-2 gap-4">
             <div>
-              <label class="label" for="contactName">Ad Soyad <span class="text-rose-500">*</span></label>
+              <label class="label" for="contactName">Ad Soyad <span class="text-rose-5000">*</span></label>
               <input id="contactName" name="contactName" class="field" required placeholder="Dr. Ayşe Yılmaz" />
             </div>
             <div>
-              <label class="label" for="contactEmail">E-posta <span class="text-rose-500">*</span></label>
+              <label class="label" for="contactEmail">E-posta <span class="text-rose-5000">*</span></label>
               <input id="contactEmail" name="contactEmail" type="email" class="field" required placeholder="ornek@kurum.edu.tr" />
             </div>
             <div>
@@ -145,7 +145,7 @@
         <fieldset class="space-y-3 form-section" data-section="title">
           <legend class="section-legend text-sm font-semibold text-zinc-900">Bildiri Başlığı</legend>
           <div>
-            <label class="label" for="title">Başlık <span class="text-rose-500">*</span></label>
+            <label class="label" for="title">Başlık <span class="text-rose-5000">*</span></label>
             <input id="title" name="title" class="field" required maxlength="220" placeholder="örn. C1-İnhibitör Eksikliğine Bağlı Tekrarlayan Anjiyoödem Atağı: Tanı ve Yönetim" />
             <p class="helper">Yazarken otomatik <strong>Title Case</strong>'e dönüşür. Boşluklar normalleştirilir.</p>
           </div>
@@ -157,19 +157,19 @@
         <fieldset class="space-y-3 form-section" data-section="abstract">
           <legend class="section-legend text-sm font-semibold text-zinc-900">Özet</legend>
           <div>
-            <label class="label" for="abstractEditor">Bildiri özeti (Giriş — Olgu/Yöntem — Bulgular — Tartışma) <span class="text-rose-500">*</span></label>
+            <label class="label" for="abstractEditor">Bildiri özeti (Giriş — Olgu/Yöntem — Bulgular — Tartışma) <span class="text-rose-5000">*</span></label>
             <p class="helper">Word veya Google Docs'tan tabloları, listeleri ve görselleri doğrudan kopyala-yapıştır yapabilirsiniz. Kalın/italik formatlar korunur.</p>
             <div class="editor-wrap">
-              <div id="abstractEditor"></div>
+              <textarea id="abstractEditor"></textarea>
             </div>
             <div class="flex items-center justify-between mt-2">
-              <span class="text-xs text-zinc-500"><span id="wordCount">0</span> / <span id="wordLimit">500</span> kelime</span>
-              <span id="wordHint" class="text-xs text-zinc-500">Hedef: 250–500 kelime</span>
+              <span class="text-xs text-zinc-5000"><span id="wordCount">0</span> / <span id="wordLimit">5000</span> kelime</span>
+              <span id="wordHint" class="text-xs text-zinc-5000">Hedef: 250–5000 kelime</span>
             </div>
             <div id="counterBar" class="counter-bar"><div style="width:0%"></div></div>
           </div>
           <div>
-            <label class="label" for="keywords">Anahtar Kelimeler (3–6 adet, virgülle ayrılır) <span class="text-rose-500">*</span></label>
+            <label class="label" for="keywords">Anahtar Kelimeler (3–6 adet, virgülle ayrılır) <span class="text-rose-5000">*</span></label>
             <input id="keywords" name="keywords" class="field" required placeholder="HAE, C1-INH, anjiyoödem, immün yetmezlik" />
           </div>
         </fieldset>
@@ -180,11 +180,11 @@
         <fieldset class="space-y-3 form-section" data-section="declaration">
           <legend class="section-legend text-sm font-semibold text-zinc-900">Beyan</legend>
           <label class="flex items-start gap-3 text-sm text-zinc-700">
-            <input id="ackNoWithdraw" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" required />
+            <input id="ackNoWithdraw" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-5000" required />
             <span>Derneğimiz kurallarına göre bir çalışma bu toplantıya sunulmak üzere kabul edildikten sonra geri çekilemez ve bildiri özetleri (bildiri özet kitabı ve/veya web sayfası) arasında yerini alır. Kullanıcı (bildiri sahibi ve/veya yazarı) bu koşulu bildiri kabul tarihi itibariyle kabul etmiş sayılır.</span>
           </label>
           <label class="flex items-start gap-3 text-sm text-zinc-700">
-            <input id="ackAttendance" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" required />
+            <input id="ackAttendance" type="checkbox" class="mt-1 h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-5000" required />
             <span>Toplantı katılımı zorunludur. Toplantıya katılım yapmayanların posterleri özet kitabında "sunulmadı" ifadesi ile yer alır veya hiç yer almaz.</span>
           </label>
         </fieldset>
@@ -220,7 +220,7 @@
   </section>
 
   <footer class="border-t border-zinc-200 mt-10">
-    <div class="max-w-6xl mx-auto px-5 py-8 text-sm text-zinc-500 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+    <div class="max-w-6xl mx-auto px-5 py-8 text-sm text-zinc-5000 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
       <div id="footerOrg">© Türkiye Ulusal Allerji ve Klinik İmmünoloji Derneği</div>
       <div class="flex items-center gap-4">
         <a href="https://www.aid.org.tr/hao-kapadokya-2026/" target="_blank" rel="noopener" class="link">Toplantı Programı</a>
@@ -258,7 +258,7 @@
       <div class="px-6 py-4 border-b border-zinc-200 flex items-center justify-between sticky top-0 bg-white z-10">
         <div>
           <h3 class="font-semibold">Son Kontrol</h3>
-          <p class="text-xs text-zinc-500 mt-0.5">Bilgilerinizi gözden geçirin.</p>
+          <p class="text-xs text-zinc-5000 mt-0.5">Bilgilerinizi gözden geçirin.</p>
         </div>
         <button class="btn btn-ghost btn-sm" data-close>Kapat</button>
       </div>
@@ -294,10 +294,11 @@
           <strong>📌 Bildiri numaranızı kaydedin.</strong> Durumunuzu sorgulamak ve değerlendirme aşamasını takip etmek için bu numaraya ihtiyacınız olacak. Aşağıdaki butonla bildirinizin Word dökümanını da indirebilirsiniz — saklamanızı tavsiye ederiz.
         </p>
       </div>
-      <div class="flex flex-col sm:flex-row justify-end mt-5 gap-2">
+      <div class="flex flex-col sm:flex-row justify-end mt-5 gap-2 flex-wrap">
         <button class="btn btn-ghost" data-close>Kapat</button>
         <button id="newSubmissionBtn" class="btn btn-ghost">Yeni Başvuru</button>
-        <button id="downloadMySubmissionBtn" class="btn btn-accent">📄 Bildirimi Word Olarak İndir</button>
+        <button id="downloadMySubmissionDocxBtn" class="btn btn-ghost">DOCX (düz metin)</button>
+        <button id="downloadMySubmissionBtn" class="btn btn-accent">📄 PDF Olarak İndir</button>
       </div>
     </div>
   </div>
@@ -306,6 +307,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
   <script src="assets/supabase-config.js"></script>
   <script src="assets/app.js"></script>
   <script src="assets/supabase-driver.js"></script>

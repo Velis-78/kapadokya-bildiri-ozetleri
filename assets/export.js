@@ -378,6 +378,218 @@
     });
   }
 
+  // ============================================================
+  // PDF EXPORT (zengin format korunarak — tablolar, görseller, formatlar)
+  // html2pdf.js + jsPDF + html2canvas bundle'ı kullanır
+  // ============================================================
+
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  // PDF için ortak inline CSS — html2canvas eski Tailwind class'larını
+  // anlamadığı için her şey inline veya <style> bloğu olarak yazılır.
+  function pdfBaseStyles() {
+    return (
+      '<style>' +
+      '* { box-sizing: border-box; }' +
+      'body, .pdf-root { font-family: Calibri, Arial, "Segoe UI", sans-serif; color: #0a0a0a; font-size: 11pt; line-height: 1.55; }' +
+      '.pdf-page { padding: 1.4cm 1.6cm; }' +
+      '.pdf-break { page-break-before: always; }' +
+      '.pdf-title { text-align: center; font-size: 16pt; font-weight: 700; margin: 0 0 12px 0; line-height: 1.25; }' +
+      '.pdf-id { text-align: right; color: #65a30d; font-weight: 700; font-size: 10pt; letter-spacing: 0.05em; margin-bottom: 6px; }' +
+      '.pdf-authors { text-align: center; font-size: 11pt; margin: 0 0 8px 0; }' +
+      '.pdf-aff { text-align: center; font-size: 9.5pt; font-style: italic; color: #525252; margin: 2px 0; }' +
+      '.pdf-presnote { text-align: center; font-size: 9pt; color: #9ca3af; font-style: italic; margin: 8px 0 16px 0; }' +
+      '.pdf-section-title { font-size: 12pt; font-weight: 700; color: #65a30d; border-bottom: 2px solid #65a30d; padding-bottom: 4px; margin: 16px 0 10px 0; letter-spacing: 0.04em; }' +
+      '.pdf-abstract { text-align: justify; }' +
+      '.pdf-abstract p { margin: 0.5em 0; }' +
+      '.pdf-abstract h2 { font-size: 13pt; font-weight: 700; margin: 12px 0 6px 0; }' +
+      '.pdf-abstract h3 { font-size: 12pt; font-weight: 700; margin: 10px 0 4px 0; }' +
+      '.pdf-abstract ul, .pdf-abstract ol { padding-left: 1.4em; margin: 0.4em 0; }' +
+      '.pdf-abstract li { margin: 0.15em 0; }' +
+      '.pdf-abstract strong { font-weight: 700; }' +
+      '.pdf-abstract em { font-style: italic; }' +
+      '.pdf-abstract u { text-decoration: underline; }' +
+      '.pdf-abstract blockquote { border-left: 3px solid #84cc16; padding: 0.4em 1em; color: #525252; font-style: italic; margin: 0.8em 0; }' +
+      '.pdf-abstract table { width: 100%; border-collapse: collapse; margin: 0.8em 0; font-size: 10pt; page-break-inside: avoid; }' +
+      '.pdf-abstract td, .pdf-abstract th { border: 1px solid #d4d4d8; padding: 6px 9px; vertical-align: top; text-align: left; }' +
+      '.pdf-abstract th { background: #f4f4f5; font-weight: 700; }' +
+      '.pdf-abstract img { max-width: 100%; height: auto; display: block; margin: 0.6em auto; page-break-inside: avoid; }' +
+      '.pdf-abstract figure { margin: 0.8em 0; text-align: center; page-break-inside: avoid; }' +
+      '.pdf-abstract figcaption { font-size: 9pt; color: #6b7280; font-style: italic; margin-top: 4px; }' +
+      '.pdf-keywords { margin-top: 14px; font-size: 10.5pt; }' +
+      '.pdf-keywords strong { font-weight: 700; }' +
+      '.pdf-cover { text-align: center; padding-top: 35%; }' +
+      '.pdf-cover h1 { font-size: 22pt; font-weight: 700; line-height: 1.25; margin: 0 0 16px 0; }' +
+      '.pdf-cover .pdf-cover-sub { font-size: 14pt; color: #65a30d; margin: 0 0 24px 0; letter-spacing: 0.06em; }' +
+      '.pdf-cover .pdf-cover-org { font-size: 12pt; font-style: italic; color: #525252; }' +
+      '.pdf-toc-item { display: flex; gap: 10px; margin-bottom: 14px; align-items: baseline; }' +
+      '.pdf-toc-num { font-weight: 700; min-width: 20px; }' +
+      '.pdf-toc-title { flex: 1; }' +
+      '.pdf-toc-meta { font-size: 9pt; color: #6b7280; font-style: italic; }' +
+      '</style>'
+    );
+  }
+
+  // CORS-uyumlu olmayan görselleri base64 data URL'ye çevir (html2canvas için)
+  function preprocessImages(container) {
+    var imgs = container.querySelectorAll('img');
+    var promises = [];
+    imgs.forEach(function (img) {
+      img.setAttribute('crossorigin', 'anonymous');
+      // Data URL ise zaten OK
+      if (img.src.indexOf('data:') === 0) return;
+      // CORS-aware fetch ile base64'e çevir
+      promises.push(
+        fetch(img.src, { mode: 'cors' })
+          .then(function (r) { return r.blob(); })
+          .then(function (blob) {
+            return new Promise(function (resolve) {
+              var fr = new FileReader();
+              fr.onload = function () {
+                img.src = fr.result;
+                resolve();
+              };
+              fr.onerror = function () { resolve(); }; // ignore failures
+              fr.readAsDataURL(blob);
+            });
+          })
+          .catch(function () { /* fetch failed — html2canvas useCORS dener */ })
+      );
+    });
+    return Promise.all(promises);
+  }
+
+  function buildSubmissionPdfHtml(sub) {
+    var safeAbstract = global.BildiriSanitize
+      ? global.BildiriSanitize.sanitize(sub.abstract || '')
+      : escHtml(sub.abstract || '');
+    var authorParts = (sub.authors || []).map(function (a) {
+      return escHtml(a.fullName) +
+        (a.affiliationIndex ? '<sup>' + escHtml(a.affiliationIndex) + '</sup>' : '') +
+        (a.presenter ? '<sup style="color:#65a30d">*</sup>' : '');
+    }).join(', ');
+    var affs = (sub.affiliations || []).map(function (af, i) {
+      return '<div class="pdf-aff"><sup>' + (i + 1) + '</sup> ' + escHtml(af) + '</div>';
+    }).join('');
+    return (
+      '<div class="pdf-page">' +
+        '<div class="pdf-id">' + escHtml(sub.id) + '</div>' +
+        '<h1 class="pdf-title">' + escHtml(sub.title || '') + '</h1>' +
+        '<div class="pdf-authors">' + authorParts + '</div>' +
+        affs +
+        '<div class="pdf-presnote">* Sunan yazar</div>' +
+        '<div class="pdf-section-title">ÖZET</div>' +
+        '<div class="pdf-abstract">' + safeAbstract + '</div>' +
+        '<div class="pdf-keywords"><strong>Anahtar Kelimeler:</strong> <em>' +
+          escHtml((sub.keywords || []).join(', ')) +
+        '</em></div>' +
+      '</div>'
+    );
+  }
+
+  function exportSubmissionPdf(sub) {
+    if (!global.html2pdf) {
+      alert('PDF kütüphanesi yüklenemedi. Sayfayı yenileyip tekrar deneyin.');
+      return;
+    }
+    var settings = global.Bildiri.getSettings();
+    var container = document.createElement('div');
+    container.className = 'pdf-root';
+    container.style.cssText = 'position:fixed;left:-99999px;top:0;width:21cm;background:#fff;';
+    container.innerHTML = pdfBaseStyles() + buildSubmissionPdfHtml(sub);
+    document.body.appendChild(container);
+
+    return preprocessImages(container).then(function () {
+      var opt = {
+        margin: 0,
+        filename: sanitize(sub.id + '_' + (sub.title || 'bildiri')) + '.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'figure', 'img', 'table'] }
+      };
+      return global.html2pdf().set(opt).from(container).save();
+    }).then(function () {
+      try { document.body.removeChild(container); } catch (e) {}
+    }).catch(function (err) {
+      console.error('PDF export error:', err);
+      try { document.body.removeChild(container); } catch (e) {}
+      alert('PDF oluşturulamadı: ' + (err.message || err));
+    });
+  }
+
+  function exportBookPdf(subs) {
+    if (!global.html2pdf) {
+      alert('PDF kütüphanesi yüklenemedi.');
+      return;
+    }
+    if (!subs || !subs.length) {
+      alert('Kitaba eklenecek bildiri yok.');
+      return;
+    }
+    var settings = global.Bildiri.getSettings();
+    var eventTitle = settings.eventTitle || 'Bildiri Kitabı';
+    var organizer = settings.organizer || '';
+
+    // İçindekiler
+    var tocItems = subs.map(function (s, i) {
+      var presenter = (s.authors || []).find(function (a) { return a.presenter; }) || (s.authors || [])[0] || {};
+      return '<div class="pdf-toc-item">' +
+        '<span class="pdf-toc-num">' + (i + 1) + '.</span>' +
+        '<div class="pdf-toc-title"><div>' + escHtml(s.title || '(başlıksız)') + '</div>' +
+          '<div class="pdf-toc-meta">' + escHtml(presenter.fullName || '-') + ' ve ark. · ' + escHtml(s.id) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var html =
+      pdfBaseStyles() +
+      // Kapak
+      '<div class="pdf-page pdf-cover">' +
+        '<h1>' + escHtml(eventTitle) + '</h1>' +
+        '<div class="pdf-cover-sub">POSTER BİLDİRİ ÖZETLERİ</div>' +
+        (organizer ? '<div class="pdf-cover-org">' + escHtml(organizer) + '</div>' : '') +
+      '</div>' +
+      // İçindekiler
+      '<div class="pdf-page pdf-break">' +
+        '<h1 class="pdf-title">İÇİNDEKİLER</h1>' +
+        '<div style="margin-top:18px">' + tocItems + '</div>' +
+      '</div>' +
+      // Bildiri sayfaları
+      subs.map(function (s) {
+        return '<div class="pdf-break">' + buildSubmissionPdfHtml(s) + '</div>';
+      }).join('');
+
+    var container = document.createElement('div');
+    container.className = 'pdf-root';
+    container.style.cssText = 'position:fixed;left:-99999px;top:0;width:21cm;background:#fff;';
+    container.innerHTML = html;
+    document.body.appendChild(container);
+
+    return preprocessImages(container).then(function () {
+      var today = new Date().toISOString().slice(0, 10);
+      var opt = {
+        margin: 0,
+        filename: 'bildiri-kitabi_' + today + '.pdf',
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['css', 'legacy'], before: '.pdf-break', avoid: ['tr', 'figure', 'img', 'table'] }
+      };
+      return global.html2pdf().set(opt).from(container).save();
+    }).then(function () {
+      try { document.body.removeChild(container); } catch (e) {}
+    }).catch(function (err) {
+      console.error('Book PDF export error:', err);
+      try { document.body.removeChild(container); } catch (e) {}
+      alert('Bildiri kitabı PDF oluşturulamadı: ' + (err.message || err));
+    });
+  }
+
   // ---- Yardımcı: dosya adı temizleyici ----
   function sanitize(str) {
     return String(str)
@@ -389,6 +601,8 @@
   global.BildiriExport = {
     exportSubmissionDocx: exportSubmissionDocx,
     exportAllXlsx: exportAllXlsx,
-    exportBookDocx: exportBookDocx
+    exportBookDocx: exportBookDocx,
+    exportSubmissionPdf: exportSubmissionPdf,
+    exportBookPdf: exportBookPdf
   };
 })(window);

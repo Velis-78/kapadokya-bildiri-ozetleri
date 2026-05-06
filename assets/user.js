@@ -419,12 +419,21 @@
 
   document.getElementById('downloadMySubmissionBtn').addEventListener('click', function () {
     if (!lastSubmittedRecord) { alert('İndirilecek bildiri bulunamadı.'); return; }
-    if (window.BildiriExport && window.BildiriExport.exportSubmissionDocx) {
-      window.BildiriExport.exportSubmissionDocx(lastSubmittedRecord);
+    if (window.BildiriExport && window.BildiriExport.exportSubmissionPdf) {
+      window.BildiriExport.exportSubmissionPdf(lastSubmittedRecord);
     } else {
-      alert('İndirme aracı yüklenemedi. Sayfayı yenileyin.');
+      alert('PDF aracı yüklenemedi. Sayfayı yenileyin.');
     }
   });
+  const docxBtn = document.getElementById('downloadMySubmissionDocxBtn');
+  if (docxBtn) {
+    docxBtn.addEventListener('click', function () {
+      if (!lastSubmittedRecord) { alert('İndirilecek bildiri bulunamadı.'); return; }
+      if (window.BildiriExport && window.BildiriExport.exportSubmissionDocx) {
+        window.BildiriExport.exportSubmissionDocx(lastSubmittedRecord);
+      }
+    });
+  }
 
   document.getElementById('submissionForm').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -522,16 +531,23 @@
         '<div class="text-sm text-zinc-700 mt-3"><strong>Başlık:</strong> ' + B.escapeHtml(sub.title) + '</div>' +
         (sub.statusNote ? '<div class="text-sm text-zinc-700 mt-2"><strong>Not:</strong> ' + B.escapeHtml(sub.statusNote) + '</div>' : '') +
         '<div class="text-xs text-zinc-500 mt-3">Son güncelleme: ' + B.formatDate(sub.updatedAt) + '</div>' +
-        '<div class="mt-3 flex justify-end">' +
-          '<button id="statusDownloadBtn" class="btn btn-accent btn-sm">📄 Bildirimi Word Olarak İndir</button>' +
+        '<div class="mt-3 flex justify-end gap-2 flex-wrap">' +
+          '<button id="statusDownloadDocxBtn" class="btn btn-ghost btn-sm">DOCX</button>' +
+          '<button id="statusDownloadBtn" class="btn btn-accent btn-sm">📄 PDF Olarak İndir</button>' +
         '</div>' +
       '</div>';
     const dl = document.getElementById('statusDownloadBtn');
     if (dl) dl.addEventListener('click', function () {
+      if (window.BildiriExport && window.BildiriExport.exportSubmissionPdf) {
+        window.BildiriExport.exportSubmissionPdf(sub);
+      } else {
+        alert('PDF aracı yüklenemedi.');
+      }
+    });
+    const dlDocx = document.getElementById('statusDownloadDocxBtn');
+    if (dlDocx) dlDocx.addEventListener('click', function () {
       if (window.BildiriExport && window.BildiriExport.exportSubmissionDocx) {
         window.BildiriExport.exportSubmissionDocx(sub);
-      } else {
-        alert('İndirme aracı yüklenemedi. Sayfayı yenileyin.');
       }
     });
   });
