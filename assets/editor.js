@@ -71,6 +71,7 @@
           // jsDelivr'dan self-hosted TinyMCE 6 — community edition, read-only kısıtlaması yok
           base_url: 'https://cdn.jsdelivr.net/npm/tinymce@6.8.5',
           suffix: '.min',
+          readonly: false,
           height: 480,
           menubar: false,
           branding: false,

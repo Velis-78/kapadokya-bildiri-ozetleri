@@ -437,12 +437,11 @@
   // CORS-uyumlu olmayan görselleri base64 data URL'ye çevir (html2canvas için)
   function preprocessImages(container) {
     var imgs = container.querySelectorAll('img');
+    if (!imgs.length) return Promise.resolve();
     var promises = [];
     imgs.forEach(function (img) {
       img.setAttribute('crossorigin', 'anonymous');
-      // Data URL ise zaten OK
       if (img.src.indexOf('data:') === 0) return;
-      // CORS-aware fetch ile base64'e çevir
       promises.push(
         fetch(img.src, { mode: 'cors' })
           .then(function (r) { return r.blob(); })
@@ -451,16 +450,34 @@
               var fr = new FileReader();
               fr.onload = function () {
                 img.src = fr.result;
-                resolve();
+                // Yeni src yüklensin diye load event'ini bekle
+                if (img.complete) { resolve(); }
+                else { img.onload = function () { resolve(); }; img.onerror = function () { resolve(); }; }
               };
-              fr.onerror = function () { resolve(); }; // ignore failures
+              fr.onerror = function () { resolve(); };
               fr.readAsDataURL(blob);
             });
           })
-          .catch(function () { /* fetch failed — html2canvas useCORS dener */ })
+          .catch(function () { /* */ })
       );
     });
     return Promise.all(promises);
+  }
+
+  // Tüm DOM yerleşmesi ve fontların yüklenmesi için bekle
+  function waitLayoutReady() {
+    return new Promise(function (resolve) {
+      // Animation frame + microtask + 250ms buffer
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function () { setTimeout(resolve, 250); });
+          } else {
+            setTimeout(resolve, 250);
+          }
+        });
+      });
+    });
   }
 
   function buildSubmissionPdfHtml(sub) {
@@ -491,42 +508,86 @@
     );
   }
 
+  // Print için stil — @media print ile sayfa kurulumu
+  function printStyles(eventTitle) {
+    return (
+      '<style>' +
+      '@page { size: A4; margin: 1.5cm 1.6cm; }' +
+      '* { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }' +
+      'body { font-family: Calibri, Arial, "Segoe UI", sans-serif; color: #000; font-size: 11pt; line-height: 1.55; margin: 0; padding: 0; }' +
+      '.pdf-page { padding: 0; }' +
+      '.pdf-break { page-break-before: always; }' +
+      '.pdf-title { text-align: center; font-size: 16pt; font-weight: 700; margin: 0 0 12px 0; line-height: 1.25; }' +
+      '.pdf-id { text-align: right; color: #555; font-weight: 700; font-size: 10pt; letter-spacing: 0.05em; margin-bottom: 6px; }' +
+      '.pdf-authors { text-align: center; font-size: 11pt; margin: 0 0 8px 0; }' +
+      '.pdf-aff { text-align: center; font-size: 9.5pt; font-style: italic; color: #555; margin: 2px 0; }' +
+      '.pdf-presnote { text-align: center; font-size: 9pt; color: #777; font-style: italic; margin: 8px 0 16px 0; }' +
+      '.pdf-section-title { font-size: 12pt; font-weight: 700; color: #000; border-bottom: 2px solid #000; padding-bottom: 4px; margin: 16px 0 10px 0; letter-spacing: 0.04em; }' +
+      '.pdf-abstract { text-align: justify; }' +
+      '.pdf-abstract p { margin: 0.5em 0; }' +
+      '.pdf-abstract h2 { font-size: 13pt; font-weight: 700; margin: 12px 0 6px 0; }' +
+      '.pdf-abstract h3 { font-size: 12pt; font-weight: 700; margin: 10px 0 4px 0; }' +
+      '.pdf-abstract ul, .pdf-abstract ol { padding-left: 1.4em; margin: 0.4em 0; }' +
+      '.pdf-abstract li { margin: 0.15em 0; }' +
+      '.pdf-abstract strong, .pdf-abstract b { font-weight: 700; }' +
+      '.pdf-abstract em, .pdf-abstract i { font-style: italic; }' +
+      '.pdf-abstract u { text-decoration: underline; }' +
+      '.pdf-abstract blockquote { border-left: 3px solid #000; padding: 0.4em 1em; color: #444; font-style: italic; margin: 0.8em 0; }' +
+      '.pdf-abstract table { width: 100%; border-collapse: collapse; margin: 0.8em 0; font-size: 10pt; page-break-inside: avoid; }' +
+      '.pdf-abstract td, .pdf-abstract th { border: 1px solid #000; padding: 6px 9px; vertical-align: top; text-align: left; }' +
+      '.pdf-abstract th { background: #eee; font-weight: 700; }' +
+      '.pdf-abstract img { max-width: 100%; height: auto; display: block; margin: 0.6em auto; page-break-inside: avoid; }' +
+      '.pdf-abstract figure { margin: 0.8em 0; text-align: center; page-break-inside: avoid; }' +
+      '.pdf-abstract figcaption { font-size: 9pt; color: #555; font-style: italic; margin-top: 4px; }' +
+      '.pdf-keywords { margin-top: 14px; font-size: 10.5pt; }' +
+      '.pdf-keywords strong { font-weight: 700; }' +
+      '.pdf-cover { text-align: center; padding-top: 30%; }' +
+      '.pdf-cover h1 { font-size: 22pt; font-weight: 700; line-height: 1.25; margin: 0 0 16px 0; }' +
+      '.pdf-cover .pdf-cover-sub { font-size: 14pt; margin: 0 0 24px 0; letter-spacing: 0.06em; }' +
+      '.pdf-cover .pdf-cover-org { font-size: 12pt; font-style: italic; color: #444; }' +
+      '.pdf-toc-item { display: flex; gap: 10px; margin-bottom: 14px; align-items: baseline; }' +
+      '.pdf-toc-num { font-weight: 700; min-width: 20px; }' +
+      '.pdf-toc-title { flex: 1; }' +
+      '.pdf-toc-meta { font-size: 9pt; color: #555; font-style: italic; }' +
+      '.print-toolbar { position: sticky; top: 0; background: #fafafa; padding: 12px; border-bottom: 1px solid #ddd; text-align: center; z-index: 1000; }' +
+      '.print-toolbar button { background: #000; color: #fff; border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; font-weight: 600; margin: 0 5px; }' +
+      '.print-toolbar button.secondary { background: #f4f4f5; color: #000; border: 1px solid #ddd; }' +
+      '@media print { .print-toolbar { display: none !important; } body { background: #fff; } }' +
+      '</style>' +
+      '<title>' + escHtml(eventTitle || 'Bildiri') + '</title>'
+    );
+  }
+
   function exportSubmissionPdf(sub) {
-    if (!global.html2pdf) {
-      alert('PDF kütüphanesi yüklenemedi. Sayfayı yenileyip tekrar deneyin.');
+    var settings = global.Bildiri.getSettings();
+    var eventTitle = settings.eventTitle || 'Bildiri';
+    var win = window.open('', '_blank');
+    if (!win) {
+      alert('Pop-up engellendi! Tarayıcı ayarlarından bu site için pop-up\'a izin verin ve tekrar deneyin.');
       return;
     }
-    var settings = global.Bildiri.getSettings();
-    var container = document.createElement('div');
-    container.className = 'pdf-root';
-    container.style.cssText = 'position:fixed;left:-99999px;top:0;width:21cm;background:#fff;';
-    container.innerHTML = pdfBaseStyles() + buildSubmissionPdfHtml(sub);
-    document.body.appendChild(container);
-
-    return preprocessImages(container).then(function () {
-      var opt = {
-        margin: 0,
-        filename: sanitize(sub.id + '_' + (sub.title || 'bildiri')) + '.pdf',
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', 'figure', 'img', 'table'] }
-      };
-      return global.html2pdf().set(opt).from(container).save();
-    }).then(function () {
-      try { document.body.removeChild(container); } catch (e) {}
-    }).catch(function (err) {
-      console.error('PDF export error:', err);
-      try { document.body.removeChild(container); } catch (e) {}
-      alert('PDF oluşturulamadı: ' + (err.message || err));
-    });
+    var html =
+      '<!doctype html><html lang="tr"><head><meta charset="utf-8">' +
+      printStyles(eventTitle) +
+      '</head><body>' +
+      '<div class="print-toolbar">' +
+        '<strong>📄 PDF Önizleme:</strong> "Yazdır / PDF Olarak Kaydet" düğmesine basıp hedefte <em>"PDF olarak kaydet"</em> seçin.' +
+        '<div style="margin-top:10px">' +
+          '<button onclick="window.print()">🖨️ Yazdır / PDF Olarak Kaydet</button>' +
+          '<button class="secondary" onclick="window.close()">Kapat</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="max-width: 17.7cm; margin: 0 auto; padding: 1.5cm 0;">' +
+        buildSubmissionPdfHtml(sub) +
+      '</div>' +
+      '<script>window.addEventListener("load", function(){ setTimeout(function(){ window.focus(); window.print(); }, 800); });<\/script>' +
+      '</body></html>';
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
   }
 
   function exportBookPdf(subs) {
-    if (!global.html2pdf) {
-      alert('PDF kütüphanesi yüklenemedi.');
-      return;
-    }
     if (!subs || !subs.length) {
       alert('Kitaba eklenecek bildiri yok.');
       return;
@@ -535,7 +596,6 @@
     var eventTitle = settings.eventTitle || 'Bildiri Kitabı';
     var organizer = settings.organizer || '';
 
-    // İçindekiler
     var tocItems = subs.map(function (s, i) {
       var presenter = (s.authors || []).find(function (a) { return a.presenter; }) || (s.authors || [])[0] || {};
       return '<div class="pdf-toc-item">' +
@@ -546,48 +606,46 @@
       '</div>';
     }).join('');
 
-    var html =
-      pdfBaseStyles() +
+    var win = window.open('', '_blank');
+    if (!win) {
+      alert('Pop-up engellendi! Tarayıcı ayarlarından bu site için pop-up\'a izin verin.');
+      return;
+    }
+
+    var bodyHtml =
       // Kapak
-      '<div class="pdf-page pdf-cover">' +
+      '<div class="pdf-cover">' +
         '<h1>' + escHtml(eventTitle) + '</h1>' +
         '<div class="pdf-cover-sub">POSTER BİLDİRİ ÖZETLERİ</div>' +
         (organizer ? '<div class="pdf-cover-org">' + escHtml(organizer) + '</div>' : '') +
       '</div>' +
-      // İçindekiler
-      '<div class="pdf-page pdf-break">' +
+      '<div class="pdf-break">' +
         '<h1 class="pdf-title">İÇİNDEKİLER</h1>' +
         '<div style="margin-top:18px">' + tocItems + '</div>' +
       '</div>' +
-      // Bildiri sayfaları
       subs.map(function (s) {
         return '<div class="pdf-break">' + buildSubmissionPdfHtml(s) + '</div>';
       }).join('');
 
-    var container = document.createElement('div');
-    container.className = 'pdf-root';
-    container.style.cssText = 'position:fixed;left:-99999px;top:0;width:21cm;background:#fff;';
-    container.innerHTML = html;
-    document.body.appendChild(container);
-
-    return preprocessImages(container).then(function () {
-      var today = new Date().toISOString().slice(0, 10);
-      var opt = {
-        margin: 0,
-        filename: 'bildiri-kitabi_' + today + '.pdf',
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], before: '.pdf-break', avoid: ['tr', 'figure', 'img', 'table'] }
-      };
-      return global.html2pdf().set(opt).from(container).save();
-    }).then(function () {
-      try { document.body.removeChild(container); } catch (e) {}
-    }).catch(function (err) {
-      console.error('Book PDF export error:', err);
-      try { document.body.removeChild(container); } catch (e) {}
-      alert('Bildiri kitabı PDF oluşturulamadı: ' + (err.message || err));
-    });
+    var html =
+      '<!doctype html><html lang="tr"><head><meta charset="utf-8">' +
+      printStyles(eventTitle + ' — Bildiri Kitabı') +
+      '</head><body>' +
+      '<div class="print-toolbar">' +
+        '<strong>📕 Bildiri Kitabı Önizlemesi (' + subs.length + ' bildiri):</strong> "Yazdır / PDF Olarak Kaydet" düğmesine basıp hedefte <em>"PDF olarak kaydet"</em> seçin.' +
+        '<div style="margin-top:10px">' +
+          '<button onclick="window.print()">🖨️ Yazdır / PDF Olarak Kaydet</button>' +
+          '<button class="secondary" onclick="window.close()">Kapat</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="max-width: 17.7cm; margin: 0 auto; padding: 1.5cm 0;">' +
+        bodyHtml +
+      '</div>' +
+      '<script>window.addEventListener("load", function(){ setTimeout(function(){ window.focus(); window.print(); }, 1500); });<\/script>' +
+      '</body></html>';
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
   }
 
   // ---- Yardımcı: dosya adı temizleyici ----

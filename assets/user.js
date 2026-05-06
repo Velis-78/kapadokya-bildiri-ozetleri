@@ -219,6 +219,11 @@
   }
 
   // Editörü asenkron başlat
+  function hideEditorLoading() {
+    const loadingEl = document.getElementById('abstractEditorLoading');
+    if (loadingEl) loadingEl.style.display = 'none';
+  }
+
   if (window.BildiriEditor && window.BildiriEditor.init) {
     window.BildiriEditor.init('abstractEditor', {
       placeholder: 'Bildirinizi buraya yazın. Word/Google Docs\'tan tablo, resim ve formatlı metni doğrudan yapıştırabilirsiniz.',
@@ -229,14 +234,18 @@
       }
     }).then(function (editor) {
       abstractEditor = editor;
-      // Taslakta abstract varsa yükle
+      hideEditorLoading();
       const draft = loadDraft();
       if (draft && draft.abstract) {
         editor.setData(draft.abstract);
       }
     }).catch(function (err) {
       console.error('Editör başlatılamadı:', err);
-      alert('Metin editörü yüklenemedi. Sayfayı yenileyin veya farklı bir tarayıcı deneyin.');
+      hideEditorLoading();
+      const wrap = document.querySelector('.editor-wrap');
+      if (wrap) {
+        wrap.innerHTML = '<div class="p-6 text-sm text-rose-700">Metin editörü yüklenemedi. Sayfayı yenileyin veya farklı bir tarayıcı deneyin.<br><br>Geçici olarak basit metin alanı ile devam edebilirsiniz:<textarea id="abstractEditor" class="field mt-3" style="min-height:240px;width:100%" placeholder="Bildiri özetini yazın..."></textarea></div>';
+      }
     });
   }
 
