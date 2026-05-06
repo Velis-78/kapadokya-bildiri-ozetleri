@@ -79,20 +79,31 @@
     if (s.organizer) document.getElementById('footerOrg').textContent = '© ' + s.organizer;
     document.getElementById('kpiCount').textContent = B.listSubmissions().length;
     document.getElementById('kpiLimit').textContent = s.wordLimit;
-    document.getElementById('wordLimit').textContent = s.wordLimit;
+    const wlEl = document.getElementById('wordLimit');
+    if (wlEl) wlEl.textContent = s.wordLimit;
     applyRuleTexts(s);
-    // Counter'ı yeniden hesapla
-    if (typeof updateCounter === 'function') updateCounter();
+    // Deadline (son başvuru tarihi)
+    const dlEl = document.getElementById('kpiDeadline');
+    if (dlEl) {
+      if (s.deadline) {
+        try {
+          const d = new Date(s.deadline);
+          dlEl.textContent = d.toLocaleDateString('tr-TR', {
+            day: '2-digit', month: 'long', year: 'numeric'
+          });
+        } catch (e) { dlEl.textContent = '—'; }
+      } else {
+        dlEl.textContent = '—';
+      }
+    }
+    // Counter'ı yeniden hesapla — try/catch ile değişken init hatasından korun
+    try {
+      if (typeof updateCounter === 'function') updateCounter();
+    } catch (e) { /* abstractEl henüz tanımlanmamış olabilir */ }
   }
 
-  applySettingsToPage();
+  // İlk render — script'in geri kalanı henüz çalışmadığı için sadece güvenli alanlar
   document.addEventListener('bildiri:loaded', applySettingsToPage);
-  if (settings.deadline) {
-    const d = new Date(settings.deadline);
-    document.getElementById('kpiDeadline').textContent = d.toLocaleDateString('tr-TR', {
-      day: '2-digit', month: 'long', year: 'numeric'
-    });
-  }
 
   // ---- Yazar ve Kurum kartları ----
   const authorList = document.getElementById('authorList');
@@ -507,6 +518,10 @@
     renumberAff();
     updateCounter();
   }
+
+  // Şimdi tüm fonksiyonlar ve değişkenler hazır — settings'i UI'ya uygula.
+  // Supabase verisi sonradan geldiğinde 'bildiri:loaded' eventiyle yeniden uygular.
+  applySettingsToPage();
 
   // ---- Toast ----
   function showToast(msg, kind) {
