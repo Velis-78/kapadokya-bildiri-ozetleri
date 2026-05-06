@@ -32,7 +32,9 @@
     deadline: '2026-09-30',
     submissionsOpen: true,
     accentColor: '#A3E635',
-    formSectionsOrder: ['contact', 'authors', 'affiliations', 'title', 'abstract', 'declaration']
+    formSectionsOrder: ['contact', 'authors', 'affiliations', 'title', 'abstract', 'declaration'],
+    ruleFormatText: 'Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. {wordLimit} kelime sınırı (başlık ve yazar bilgileri hariç).',
+    ruleContentText: 'Olgu sunumu, derleme veya araştırma niteliğinde olabilir. Türkçe yazılır. Tablo ve şekil yerine açıklayıcı metin tercih edilir.'
   };
 
   // -------- Basit hash (LocalStorage demo amaçlı) ----------

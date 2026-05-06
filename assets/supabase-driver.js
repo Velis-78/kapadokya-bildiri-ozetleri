@@ -95,7 +95,9 @@
       deadline: setting.deadline,
       submissionsOpen: setting.submissions_open,
       accentColor: setting.accent_color,
-      formSectionsOrder: setting.form_sections_order || ['contact','authors','affiliations','title','abstract','declaration']
+      formSectionsOrder: setting.form_sections_order || ['contact','authors','affiliations','title','abstract','declaration'],
+      ruleFormatText: setting.rule_format_text || 'Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. {wordLimit} kelime sınırı (başlık ve yazar bilgileri hariç).',
+      ruleContentText: setting.rule_content_text || 'Olgu sunumu, derleme veya araştırma niteliğinde olabilir. Türkçe yazılır. Tablo ve şekil yerine açıklayıcı metin tercih edilir.'
     } : null;
     cache.admins = (admins || []).map(function (a) {
       return { username: a.username, name: a.name, role: a.role, id: a.id };
@@ -222,7 +224,9 @@
       word_limit: patch.wordLimit,
       deadline: patch.deadline,
       submissions_open: patch.submissionsOpen,
-      form_sections_order: patch.formSectionsOrder
+      form_sections_order: patch.formSectionsOrder,
+      rule_format_text: patch.ruleFormatText,
+      rule_content_text: patch.ruleContentText
     };
     Object.keys(dbPatch).forEach(function (k) { if (dbPatch[k] === undefined) delete dbPatch[k]; });
     const { data, error } = await sb.from('settings').update(dbPatch).eq('id', 1).select().single();
@@ -234,7 +238,9 @@
       wordLimit: data.word_limit,
       deadline: data.deadline,
       submissionsOpen: data.submissions_open,
-      formSectionsOrder: data.form_sections_order || ['contact','authors','affiliations','title','abstract','declaration']
+      formSectionsOrder: data.form_sections_order || ['contact','authors','affiliations','title','abstract','declaration'],
+      ruleFormatText: data.rule_format_text,
+      ruleContentText: data.rule_content_text
     };
     dispatchChange();
     return cache.settings;

@@ -520,9 +520,11 @@
     document.getElementById('setEvent').value = s.eventTitle || '';
     document.getElementById('setShort').value = s.eventShort || '';
     document.getElementById('setOrg').value = s.organizer || '';
-    document.getElementById('setLimit').value = s.wordLimit || 350;
+    document.getElementById('setLimit').value = s.wordLimit || 500;
     document.getElementById('setDeadline').value = (s.deadline || '').slice(0, 10);
     document.getElementById('setOpen').checked = !!s.submissionsOpen;
+    document.getElementById('setRuleFormat').value = s.ruleFormatText || '';
+    document.getElementById('setRuleContent').value = s.ruleContentText || '';
     const order = (s.formSectionsOrder && s.formSectionsOrder.length === DEFAULT_SECTION_ORDER.length)
       ? s.formSectionsOrder.slice()
       : DEFAULT_SECTION_ORDER.slice();
@@ -544,18 +546,24 @@
     showToast('Varsayılan sıralamaya dönüldü. Kaydetmeyi unutmayın.', 'ok');
   });
 
-  document.getElementById('settingsForm').addEventListener('submit', function (e) {
+  document.getElementById('settingsForm').addEventListener('submit', async function (e) {
     e.preventDefault();
-    B.updateSettings({
-      eventTitle: document.getElementById('setEvent').value.trim(),
-      eventShort: document.getElementById('setShort').value.trim(),
-      organizer: document.getElementById('setOrg').value.trim(),
-      wordLimit: Math.max(100, Math.min(1000, parseInt(document.getElementById('setLimit').value, 10) || 350)),
-      deadline: document.getElementById('setDeadline').value,
-      submissionsOpen: document.getElementById('setOpen').checked
-    });
-    showToast('Ayarlar kaydedildi.', 'ok');
-    document.getElementById('appEvent').textContent = B.getSettings().eventTitle;
+    try {
+      await Promise.resolve(B.updateSettings({
+        eventTitle: document.getElementById('setEvent').value.trim(),
+        eventShort: document.getElementById('setShort').value.trim(),
+        organizer: document.getElementById('setOrg').value.trim(),
+        wordLimit: Math.max(100, Math.min(2000, parseInt(document.getElementById('setLimit').value, 10) || 500)),
+        deadline: document.getElementById('setDeadline').value,
+        submissionsOpen: document.getElementById('setOpen').checked,
+        ruleFormatText: document.getElementById('setRuleFormat').value,
+        ruleContentText: document.getElementById('setRuleContent').value
+      }));
+      showToast('Ayarlar kaydedildi.', 'ok');
+      document.getElementById('appEvent').textContent = B.getSettings().eventTitle;
+    } catch (ex) {
+      showToast(ex.message || 'Ayarlar kaydedilemedi.', 'err');
+    }
   });
 
   document.getElementById('dataBackup').addEventListener('click', function () {

@@ -5,7 +5,7 @@
   'use strict';
 
   const B = window.Bildiri;
-  const settings = B.getSettings();
+  let settings = B.getSettings();
   const DRAFT_KEY = 'bildiri.draft.v1';
   const DEFAULT_ORDER = ['contact', 'authors', 'affiliations', 'title', 'abstract', 'declaration'];
 
@@ -58,13 +58,35 @@
   document.addEventListener('bildiri:loaded', applySectionOrder);
 
   // ---- Hero / üst bilgiler ----
-  document.getElementById('navBrand').textContent = settings.eventShort;
-  document.getElementById('footerOrg').textContent = '© ' + settings.organizer;
-  document.getElementById('kpiCount').textContent = B.listSubmissions().length;
-  document.getElementById('kpiLimit').textContent = settings.wordLimit;
-  document.getElementById('wordLimit').textContent = settings.wordLimit;
-  const ruleWordLimit = document.getElementById('ruleWordLimit');
-  if (ruleWordLimit) ruleWordLimit.textContent = settings.wordLimit;
+  function applyRuleTexts(s) {
+    const fmt = document.getElementById('ruleFormatText');
+    const con = document.getElementById('ruleContentText');
+    const wlim = String(s.wordLimit || 500);
+    if (fmt && s.ruleFormatText) {
+      fmt.textContent = s.ruleFormatText.replace(/\{wordLimit\}/g, wlim);
+    } else if (fmt) {
+      fmt.textContent = 'Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. ' + wlim + ' kelime sınırı (başlık ve yazar bilgileri hariç).';
+    }
+    if (con && s.ruleContentText) {
+      con.textContent = s.ruleContentText.replace(/\{wordLimit\}/g, wlim);
+    }
+  }
+
+  function applySettingsToPage() {
+    settings = B.getSettings();
+    const s = settings;
+    if (s.eventShort) document.getElementById('navBrand').textContent = s.eventShort;
+    if (s.organizer) document.getElementById('footerOrg').textContent = '© ' + s.organizer;
+    document.getElementById('kpiCount').textContent = B.listSubmissions().length;
+    document.getElementById('kpiLimit').textContent = s.wordLimit;
+    document.getElementById('wordLimit').textContent = s.wordLimit;
+    applyRuleTexts(s);
+    // Counter'ı yeniden hesapla
+    if (typeof updateCounter === 'function') updateCounter();
+  }
+
+  applySettingsToPage();
+  document.addEventListener('bildiri:loaded', applySettingsToPage);
   if (settings.deadline) {
     const d = new Date(settings.deadline);
     document.getElementById('kpiDeadline').textContent = d.toLocaleDateString('tr-TR', {
@@ -342,6 +364,16 @@
   }
 
   let pendingSubmitData = null;
+  let lastSubmittedRecord = null;
+
+  document.getElementById('downloadMySubmissionBtn').addEventListener('click', function () {
+    if (!lastSubmittedRecord) { alert('İndirilecek bildiri bulunamadı.'); return; }
+    if (window.BildiriExport && window.BildiriExport.exportSubmissionDocx) {
+      window.BildiriExport.exportSubmissionDocx(lastSubmittedRecord);
+    } else {
+      alert('İndirme aracı yüklenemedi. Sayfayı yenileyin.');
+    }
+  });
 
   document.getElementById('submissionForm').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -367,6 +399,7 @@
     btn.textContent = 'Gönderiliyor...';
     try {
       const rec = await Promise.resolve(B.createSubmission(pendingSubmitData));
+      lastSubmittedRecord = rec;
       clearDraft();
       document.getElementById('successId').textContent = rec.id;
       closeModal('reviewModal');
@@ -434,7 +467,18 @@
         '<div class="text-sm text-zinc-700 mt-3"><strong>Başlık:</strong> ' + B.escapeHtml(sub.title) + '</div>' +
         (sub.statusNote ? '<div class="text-sm text-zinc-700 mt-2"><strong>Not:</strong> ' + B.escapeHtml(sub.statusNote) + '</div>' : '') +
         '<div class="text-xs text-zinc-500 mt-3">Son güncelleme: ' + B.formatDate(sub.updatedAt) + '</div>' +
+        '<div class="mt-3 flex justify-end">' +
+          '<button id="statusDownloadBtn" class="btn btn-accent btn-sm">📄 Bildirimi Word Olarak İndir</button>' +
+        '</div>' +
       '</div>';
+    const dl = document.getElementById('statusDownloadBtn');
+    if (dl) dl.addEventListener('click', function () {
+      if (window.BildiriExport && window.BildiriExport.exportSubmissionDocx) {
+        window.BildiriExport.exportSubmissionDocx(sub);
+      } else {
+        alert('İndirme aracı yüklenemedi. Sayfayı yenileyin.');
+      }
+    });
   });
 
   // ---- Modal yardımcıları ----

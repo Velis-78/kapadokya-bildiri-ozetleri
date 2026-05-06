@@ -48,12 +48,16 @@ create table if not exists public.settings (
   submissions_open boolean not null default true,
   accent_color text default '#A3E635',
   form_sections_order text[] default array['contact','authors','affiliations','title','abstract','declaration']::text[],
+  rule_format_text text default 'Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. {wordLimit} kelime sınırı (başlık ve yazar bilgileri hariç).',
+  rule_content_text text default 'Olgu sunumu, derleme veya araştırma niteliğinde olabilir. Türkçe yazılır. Tablo ve şekil yerine açıklayıcı metin tercih edilir.',
   updated_at timestamptz not null default now(),
   constraint settings_singleton check (id = 1)
 );
 
--- Eski kurulumlar için: kolon yoksa ekle
+-- Eski kurulumlar için: kolonlar yoksa ekle
 alter table public.settings add column if not exists form_sections_order text[] default array['contact','authors','affiliations','title','abstract','declaration']::text[];
+alter table public.settings add column if not exists rule_format_text text default 'Yalnızca poster bildiri özeti. Tek dosya, ek belge gerekmez. {wordLimit} kelime sınırı (başlık ve yazar bilgileri hariç).';
+alter table public.settings add column if not exists rule_content_text text default 'Olgu sunumu, derleme veya araştırma niteliğinde olabilir. Türkçe yazılır. Tablo ve şekil yerine açıklayıcı metin tercih edilir.';
 
 insert into public.settings (id, event_title, event_short, organizer, word_limit, deadline, submissions_open)
 values (

@@ -222,6 +222,20 @@
             <input id="setOpen" type="checkbox" class="h-4 w-4 rounded border-zinc-300 text-lime-600 focus:ring-lime-500" />
             Başvurular açık
           </label>
+
+          <div class="border-t border-zinc-200 pt-4 mt-4">
+            <h4 class="text-sm font-semibold text-zinc-900 mb-2">Bildiri Yazım Kuralları (Anasayfa Kartları)</h4>
+            <p class="text-xs text-zinc-500 mb-3">Anasayfada "Bildiri Yazım Kuralları" başlığı altında görünen iki kart metnini buradan düzenleyebilirsiniz. <code class="bg-zinc-100 px-1 rounded">{wordLimit}</code> yazısı otomatik olarak kelime sınırı ile değişir.</p>
+          </div>
+          <div>
+            <label class="label" for="setRuleFormat">Format kartı metni</label>
+            <textarea id="setRuleFormat" class="field" rows="3" placeholder="Yalnızca poster bildiri özeti..."></textarea>
+          </div>
+          <div>
+            <label class="label" for="setRuleContent">İçerik kartı metni</label>
+            <textarea id="setRuleContent" class="field" rows="3" placeholder="Olgu sunumu, derleme veya araştırma..."></textarea>
+          </div>
+
           <div class="flex justify-end">
             <button class="btn btn-primary" type="submit">Ayarları kaydet</button>
           </div>
