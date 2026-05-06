@@ -68,6 +68,11 @@
       try {
         global.tinymce.init({
           target: element,
+          // GPL/Community Edition — API key gerektirmez, read-only mode'a düşmez
+          license_key: 'gpl',
+          // jsDelivr'dan self-hosted: skin/icon/plugin dosyaları aynı sürümden gelir
+          base_url: 'https://cdn.jsdelivr.net/npm/tinymce@7.6.1',
+          suffix: '.min',
           height: 480,
           menubar: false,
           branding: false,
@@ -75,7 +80,6 @@
           statusbar: true,
           elementpath: false,
           resize: true,
-          language: 'tr',
           plugins: 'advlist autolink lists link image charmap searchreplace visualblocks code fullscreen insertdatetime media table help wordcount',
           toolbar: 'undo redo | blocks | bold italic underline | bullist numlist | indent outdent | link image table | removeformat | code',
           toolbar_mode: 'sliding',
