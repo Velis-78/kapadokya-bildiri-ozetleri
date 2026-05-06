@@ -183,35 +183,62 @@
     }, 220);
   });
 
-  // ---- Kelime sayacı ----
-  const abstractEl = document.getElementById('abstract');
+  // ---- Zengin metin editörü (CKEditor 5) ----
+  let abstractEditor = null;
+  let abstractHtml = '';      // editörün son HTML içeriği
+  let abstractWordCount = 0;  // HTML strip sonrası kelime sayısı
   const wordCountEl = document.getElementById('wordCount');
   const counterBar = document.getElementById('counterBar');
   const wordHint = document.getElementById('wordHint');
 
-  function updateCounter() {
-    const wc = B.countWords(abstractEl.value);
+  function updateCounter(wc) {
+    if (typeof wc !== 'number') {
+      // Editör henüz hazır değilse mevcut HTML'den say
+      wc = window.BildiriEditor && window.BildiriEditor.countWords
+        ? window.BildiriEditor.countWords(abstractHtml)
+        : 0;
+    }
+    abstractWordCount = wc;
     wordCountEl.textContent = wc;
-    const pct = Math.min(100, Math.round((wc / settings.wordLimit) * 100));
+    const limit = (settings && settings.wordLimit) || 500;
+    const pct = Math.min(100, Math.round((wc / limit) * 100));
     counterBar.firstElementChild.style.width = pct + '%';
     counterBar.classList.remove('warn', 'over');
-    if (wc > settings.wordLimit) {
+    if (wc > limit) {
       counterBar.classList.add('over');
-      wordHint.textContent = 'Sınırı aştınız (' + (wc - settings.wordLimit) + ' fazla)';
+      wordHint.textContent = 'Sınırı aştınız (' + (wc - limit) + ' fazla)';
       wordHint.className = 'text-xs text-rose-600 font-medium';
-    } else if (wc > settings.wordLimit * 0.9) {
+    } else if (wc > limit * 0.9) {
       counterBar.classList.add('warn');
       wordHint.textContent = 'Sınıra yaklaştınız';
       wordHint.className = 'text-xs text-amber-600 font-medium';
     } else {
-      wordHint.textContent = 'Hedef: 250–' + settings.wordLimit + ' kelime';
+      wordHint.textContent = 'Hedef: 250–' + limit + ' kelime';
       wordHint.className = 'text-xs text-zinc-500';
     }
   }
-  abstractEl.addEventListener('input', function () {
-    updateCounter();
-    saveDraft();
-  });
+
+  // Editörü asenkron başlat
+  if (window.BildiriEditor && window.BildiriEditor.init) {
+    window.BildiriEditor.init('abstractEditor', {
+      placeholder: 'Bildirinizi buraya yazın. Word/Google Docs\'tan tablo, resim ve formatlı metni doğrudan yapıştırabilirsiniz.',
+      onWordCount: function (words, chars, html) {
+        abstractHtml = html || '';
+        updateCounter(words);
+        saveDraft();
+      }
+    }).then(function (editor) {
+      abstractEditor = editor;
+      // Taslakta abstract varsa yükle
+      const draft = loadDraft();
+      if (draft && draft.abstract) {
+        editor.setData(draft.abstract);
+      }
+    }).catch(function (err) {
+      console.error('Editör başlatılamadı:', err);
+      alert('Metin editörü yüklenemedi. Sayfayı yenileyin veya farklı bir tarayıcı deneyin.');
+    });
+  }
 
   // ---- Diğer alanlar için autosave ----
   document.getElementById('submissionForm').addEventListener('input', saveDraft);
@@ -234,6 +261,12 @@
     const keywords = (document.getElementById('keywords').value || '')
       .split(',').map(function (k) { return k.trim(); }).filter(Boolean);
 
+    // Abstract HTML — editörden al, sanitize et
+    let abstractValue = abstractEditor ? abstractEditor.getData() : abstractHtml;
+    if (window.BildiriSanitize && window.BildiriSanitize.sanitize) {
+      abstractValue = window.BildiriSanitize.sanitize(abstractValue);
+    }
+
     return {
       contactName: document.getElementById('contactName').value.trim(),
       contactEmail: document.getElementById('contactEmail').value.trim(),
@@ -242,7 +275,7 @@
       authors: authors,
       affiliations: affiliations,
       title: document.getElementById('title').value.trim(),
-      abstract: document.getElementById('abstract').value.trim(),
+      abstract: abstractValue,
       keywords: keywords,
       ackNoWithdraw: document.getElementById('ackNoWithdraw').checked,
       ackAttendance: document.getElementById('ackAttendance').checked
@@ -271,7 +304,11 @@
     document.getElementById('contactPhone').value = d.contactPhone || '';
     document.getElementById('contactInst').value = d.contactInst || '';
     document.getElementById('title').value = d.title || '';
-    document.getElementById('abstract').value = d.abstract || '';
+    if (abstractEditor && d.abstract) {
+      abstractEditor.setData(d.abstract);
+    } else {
+      abstractHtml = d.abstract || '';
+    }
     document.getElementById('keywords').value = (d.keywords || []).join(', ');
     document.getElementById('ackNoWithdraw').checked = !!d.ackNoWithdraw;
     document.getElementById('ackAttendance').checked = !!d.ackAttendance;
@@ -305,9 +342,11 @@
     if (!d.authors.some(function (a) { return a.presenter; })) return 'Sunan yazarı işaretleyin.';
     if (!d.affiliations.length) return 'En az bir kurum eklenmelidir.';
     if (!d.title || d.title.length < 6) return 'Başlık çok kısa.';
-    if (!d.abstract) return 'Bildiri özeti boş olamaz.';
-    const wc = B.countWords(d.abstract);
-    if (wc > settings.wordLimit) return 'Özet ' + settings.wordLimit + ' kelimeyi aşamaz (şu an ' + wc + ').';
+    const plainAbs = window.BildiriEditor ? window.BildiriEditor.getPlainText(d.abstract) : (d.abstract || '');
+    if (!plainAbs.trim()) return 'Bildiri özeti boş olamaz.';
+    const wc = window.BildiriEditor ? window.BildiriEditor.countWords(d.abstract) : B.countWords(d.abstract);
+    const lim = settings.wordLimit || 500;
+    if (wc > lim) return 'Özet ' + lim + ' kelimeyi aşamaz (şu an ' + wc + ').';
     if (wc < 50) return 'Özet en az 50 kelime olmalı.';
     if (d.keywords.length < 3) return 'En az 3 anahtar kelime giriniz.';
     if (d.keywords.length > 6) return 'En fazla 6 anahtar kelime giriniz.';
@@ -318,7 +357,8 @@
   // ---- Review (son kontrol) modali ----
   function buildReviewHtml(d) {
     const esc = B.escapeHtml;
-    const wc = B.countWords(d.abstract);
+    const wc = window.BildiriEditor ? window.BildiriEditor.countWords(d.abstract) : B.countWords(d.abstract);
+    const safeAbstract = window.BildiriSanitize ? window.BildiriSanitize.sanitize(d.abstract || '') : esc(d.abstract || '');
     const authors = (d.authors || []).map(function (a) {
       const sup = a.affiliationIndex ? '<sup class="text-zinc-500">' + esc(a.affiliationIndex) + '</sup>' : '';
       return esc(a.fullName) + sup + (a.presenter ? ' <span class="text-lime-700 text-xs font-semibold">(Sunan)</span>' : '');
@@ -358,7 +398,7 @@
             '<span>Özet</span>' +
             '<span class="text-zinc-400">' + wc + ' kelime</span>' +
           '</div>' +
-          '<div class="card-soft p-3 text-sm whitespace-pre-wrap leading-relaxed">' + esc(d.abstract) + '</div>' +
+          '<div class="card-soft p-4 prose">' + safeAbstract + '</div>' +
         '</div>' +
 
         '<div>' +
@@ -435,8 +475,10 @@
     authorList.appendChild(authorRow());
     affList.appendChild(affRow());
     renumberAff();
+    if (abstractEditor) abstractEditor.setData('');
+    abstractHtml = '';
     clearDraft();
-    updateCounter();
+    updateCounter(0);
     document.getElementById('autosaveBadge').textContent = 'Otomatik kaydet hazır';
   });
 
@@ -448,7 +490,9 @@
     authorList.appendChild(authorRow());
     affList.appendChild(affRow());
     renumberAff();
-    updateCounter();
+    if (abstractEditor) abstractEditor.setData('');
+    abstractHtml = '';
+    updateCounter(0);
     document.getElementById('basvuru').scrollIntoView({ behavior: 'smooth' });
   });
 
@@ -507,7 +551,7 @@
   });
 
   // ---- İlk yükleme ----
-  // Taslak veya boş başlangıç
+  // Taslak veya boş başlangıç (abstract editör asenkron yüklendiği için ayrı handle edilir)
   const draft = loadDraft();
   if (draft && (draft.title || draft.abstract || (draft.authors || []).length)) {
     applyDraft(draft);
@@ -516,7 +560,7 @@
     authorList.appendChild(authorRow());
     affList.appendChild(affRow());
     renumberAff();
-    updateCounter();
+    updateCounter(0);
   }
 
   // Şimdi tüm fonksiyonlar ve değişkenler hazır — settings'i UI'ya uygula.

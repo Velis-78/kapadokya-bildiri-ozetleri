@@ -314,7 +314,8 @@
       return B.escapeHtml(a.fullName) + sup + (a.presenter ? ' <span class="text-lime-700 text-xs font-semibold">(Sunan)</span>' : '');
     }).join(', ');
     const affs = (s.affiliations || []).map(function (af, i) { return (i + 1) + '. ' + B.escapeHtml(af); }).join('<br>');
-    const wc = B.countWords(s.abstract || '');
+    const wc = (window.BildiriEditor ? window.BildiriEditor.countWords(s.abstract || '') : B.countWords(s.abstract || ''));
+    const safeAbstract = window.BildiriSanitize ? window.BildiriSanitize.sanitize(s.abstract || '') : B.escapeHtml(s.abstract || '');
 
     body.innerHTML =
       '<div class="flex items-center gap-3 flex-wrap">' +
@@ -332,8 +333,15 @@
       '</div>' +
 
       '<div class="mt-5">' +
-        '<div class="text-xs text-zinc-500 mb-1">Özet</div>' +
-        '<textarea id="d-abstract" class="field" style="min-height:240px;">' + B.escapeHtml(s.abstract || '') + '</textarea>' +
+        '<div class="flex items-center justify-between mb-2">' +
+          '<div class="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Özet (Önizleme)</div>' +
+          '<button id="d-edit-abstract" class="btn btn-ghost btn-sm">✏️ Düzenle</button>' +
+        '</div>' +
+        '<div id="d-abstract-preview" class="card-soft p-4 prose">' + safeAbstract + '</div>' +
+        '<div id="d-abstract-edit" class="hidden">' +
+          '<div class="editor-wrap"><div id="d-abstract-editor"></div></div>' +
+          '<div class="text-xs text-zinc-500 mt-2">Word/Google Docs\'tan tablo, görsel ve formatlı metni doğrudan yapıştırabilirsiniz.</div>' +
+        '</div>' +
       '</div>' +
 
       '<div class="grid sm:grid-cols-2 gap-3 mt-4">' +
@@ -367,20 +375,49 @@
 
     document.getElementById('detailModal').classList.remove('hidden');
 
-    document.getElementById('d-save').onclick = function () {
-      B.updateSubmission(s.id, {
-        title: document.getElementById('d-title').value.trim(),
-        abstract: document.getElementById('d-abstract').value.trim(),
-        status: document.getElementById('d-status').value,
-        statusNote: document.getElementById('d-note').value.trim()
-      }, actor());
-      closeModal();
-      renderAll();
-      showToast('Bildiri güncellendi.', 'ok');
+    // CKEditor instance — sadece "Düzenle" butonuna basıldığında başlatılır
+    let detailEditor = null;
+    let currentAbstractHtml = s.abstract || '';
+
+    document.getElementById('d-edit-abstract').onclick = function () {
+      document.getElementById('d-abstract-preview').classList.add('hidden');
+      document.getElementById('d-abstract-edit').classList.remove('hidden');
+      this.classList.add('hidden');
+      if (!detailEditor && window.BildiriEditor && window.BildiriEditor.init) {
+        window.BildiriEditor.init('d-abstract-editor', {
+          placeholder: 'Bildiri içeriği...'
+        }).then(function (ed) {
+          detailEditor = ed;
+          ed.setData(currentAbstractHtml);
+        }).catch(function (err) {
+          console.error(err);
+          alert('Editör yüklenemedi: ' + (err.message || err));
+        });
+      }
     };
-    document.getElementById('d-delete').onclick = function () {
+
+    document.getElementById('d-save').onclick = async function () {
+      const newAbstract = detailEditor ? detailEditor.getData() : currentAbstractHtml;
+      const cleanAbstract = window.BildiriSanitize ? window.BildiriSanitize.sanitize(newAbstract) : newAbstract;
+      try {
+        await Promise.resolve(B.updateSubmission(s.id, {
+          title: document.getElementById('d-title').value.trim(),
+          abstract: cleanAbstract,
+          status: document.getElementById('d-status').value,
+          statusNote: document.getElementById('d-note').value.trim()
+        }, actor()));
+        if (detailEditor) { try { await detailEditor.destroy(); } catch (e) {} detailEditor = null; }
+        closeModal();
+        renderAll();
+        showToast('Bildiri güncellendi.', 'ok');
+      } catch (ex) {
+        showToast(ex.message || 'Güncelleme başarısız.', 'err');
+      }
+    };
+    document.getElementById('d-delete').onclick = async function () {
       if (!confirm('Bu bildiriyi tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz.')) return;
-      B.deleteSubmission(s.id, actor());
+      await Promise.resolve(B.deleteSubmission(s.id, actor()));
+      if (detailEditor) { try { await detailEditor.destroy(); } catch (e) {} detailEditor = null; }
       closeModal();
       renderAll();
       showToast('Bildiri silindi.', 'err');

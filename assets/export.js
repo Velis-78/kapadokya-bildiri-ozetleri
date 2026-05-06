@@ -19,6 +19,13 @@
       return;
     }
     const settings = global.Bildiri.getSettings();
+    // FAZ 1: HTML içeriği plain text'e çevir (formatlar/tablolar/görseller kaybolur)
+    // FAZ 2: gerçek HTML→DOCX dönüşümü yapılacak
+    var abstractText = sub.abstract || '';
+    if (global.BildiriEditor && global.BildiriEditor.getPlainText) {
+      abstractText = global.BildiriEditor.getPlainText(abstractText);
+    }
+    sub = Object.assign({}, sub, { abstract: abstractText });
 
     const titleParagraph = new d.Paragraph({
       alignment: d.AlignmentType.CENTER,
@@ -179,6 +186,11 @@
         })
         .join('; ');
       const affs = (s.affiliations || []).join('; ');
+      // Excel için HTML strip (tablolar/görseller plain text)
+      var plainAbstract = s.abstract || '';
+      if (global.BildiriEditor && global.BildiriEditor.getPlainText) {
+        plainAbstract = global.BildiriEditor.getPlainText(plainAbstract);
+      }
       return {
         '#': i + 1,
         'Bildiri No': s.id,
@@ -190,8 +202,8 @@
         'İletişim E-posta': s.contactEmail || '',
         'İletişim Telefon': s.contactPhone || '',
         'Anahtar Kelimeler': (s.keywords || []).join(', '),
-        'Kelime Sayısı': global.Bildiri.countWords(s.abstract || ''),
-        'Özet': s.abstract || '',
+        'Kelime Sayısı': global.BildiriEditor ? global.BildiriEditor.countWords(s.abstract || '') : global.Bildiri.countWords(s.abstract || ''),
+        'Özet': plainAbstract,
         'Notlar': s.statusNote || '',
         'Gönderim': global.Bildiri.formatDate(s.createdAt),
         'Son Güncelleme': global.Bildiri.formatDate(s.updatedAt)
@@ -230,6 +242,14 @@
     const settings = global.Bildiri.getSettings();
     const eventTitle = settings.eventTitle || 'Bildiri Kitabı';
     const organizer = settings.organizer || '';
+
+    // FAZ 1: HTML içerikleri plain text'e çevir (Faz 2'de tam HTML→DOCX yapılacak)
+    subs = subs.map(function (s) {
+      if (global.BildiriEditor && global.BildiriEditor.getPlainText) {
+        return Object.assign({}, s, { abstract: global.BildiriEditor.getPlainText(s.abstract || '') });
+      }
+      return s;
+    });
 
     const children = [];
 
