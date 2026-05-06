@@ -8,9 +8,18 @@
   const E = window.BildiriExport;
 
   // ---- Modül-seviyesi state (TDZ'den korunmak için en üstte) ----
-  // Bu değişkenler `let` ile tanımlı; ilk çağrılan fonksiyonların onlara
+  // Bu değişkenler `let`/`const` ile tanımlı; ilk çağrılan fonksiyonların onlara
   // erişebilmesi için tüm fonksiyon tanımlarından önce burada yer alır.
   let cachedFiltered = [];
+  const SECTION_LABELS = {
+    contact: 'İletişim Bilgileri',
+    authors: 'Yazarlar',
+    affiliations: 'Kurumlar',
+    title: 'Bildiri Başlığı',
+    abstract: 'Özet',
+    declaration: 'Beyan'
+  };
+  const DEFAULT_SECTION_ORDER = ['contact', 'authors', 'affiliations', 'title', 'abstract', 'declaration'];
 
   // ---- Genel ----
   const settings = B.getSettings();
@@ -551,15 +560,7 @@
   });
 
   // ---- Ayarlar ----
-  const SECTION_LABELS = {
-    contact: 'İletişim Bilgileri',
-    authors: 'Yazarlar',
-    affiliations: 'Kurumlar',
-    title: 'Bildiri Başlığı',
-    abstract: 'Özet',
-    declaration: 'Beyan'
-  };
-  const DEFAULT_SECTION_ORDER = ['contact', 'authors', 'affiliations', 'title', 'abstract', 'declaration'];
+  // (SECTION_LABELS ve DEFAULT_SECTION_ORDER yukarıda en üstte tanımlı — TDZ koruması)
 
   function renderSectionOrderList(order) {
     const list = document.getElementById('sectionOrderList');
