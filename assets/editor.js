@@ -52,31 +52,29 @@
     return t ? t.split(/\s+/).filter(Boolean).length : 0;
   }
 
-  // ---------- Tablo HTML üreticisi ----------
-  function buildTableHtml(rows, cols) {
-    var html = '<table><tbody>';
-    for (var r = 0; r < rows; r++) {
-      html += '<tr>';
-      for (var c = 0; c < cols; c++) {
-        if (r === 0) {
-          html += '<th>Başlık ' + (c + 1) + '</th>';
-        } else {
-          html += '<td>&nbsp;</td>';
-        }
-      }
-      html += '</tr>';
-    }
-    html += '</tbody></table><p><br></p>';
-    return html;
+  // ---------- Quill yüklenmesini bekle (sayfa yenileme race condition korunuru) ----------
+  function waitForQuill(timeoutMs) {
+    return new Promise(function (resolve, reject) {
+      if (global.Quill) return resolve();
+      var start = Date.now();
+      var check = function () {
+        if (global.Quill) return resolve();
+        if (Date.now() - start >= timeoutMs) return reject(new Error('Quill ' + timeoutMs + 'ms içinde yüklenmedi'));
+        setTimeout(check, 100);
+      };
+      check();
+    });
   }
 
   // ---------- Editor başlatma ----------
   function init(elementOrId, options) {
     options = options || {};
-    if (!global.Quill) {
-      console.error('[Bildiri] Quill yüklenemedi.');
-      return Promise.reject(new Error('Quill yüklenmedi'));
-    }
+    return waitForQuill(8000).then(function () {
+      return doInit(elementOrId, options);
+    });
+  }
+
+  function doInit(elementOrId, options) {
     var element = typeof elementOrId === 'string'
       ? document.getElementById(elementOrId)
       : elementOrId;
@@ -90,14 +88,16 @@
       element = div;
     }
 
-    // Quill toolbar konfigürasyonu
+    // Toolbar — TABLO butonu KALDIRILDI
+    // (Tablolar görsel olarak yüklenir; Word'den paste edilen tablolar Quill'in clipboard'ı tarafından
+    //  sınırlı düzeyde işlenir, kullanıcı dikkatini çekecek uyarı UI'da gösteriliyor.)
     var toolbarOptions = [
       [{ header: [false, 2, 3] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{ list: 'ordered' }, { list: 'bullet' }],
       [{ indent: '-1' }, { indent: '+1' }],
       ['blockquote'],
-      ['link', 'image', 'table-custom'],
+      ['link', 'image'],
       ['clean']
     ];
 
@@ -108,7 +108,6 @@
           toolbar: {
             container: toolbarOptions,
             handlers: {
-              // Görsel: Supabase'e upload
               image: function () {
                 var input = document.createElement('input');
                 input.type = 'file';
@@ -117,11 +116,9 @@
                   var file = input.files && input.files[0];
                   if (!file) return;
                   var range = quill.getSelection(true) || { index: quill.getLength() };
-                  // Yükleniyor placeholder
                   quill.insertText(range.index, '⏳ Görsel yükleniyor...', 'italic', true);
                   uploadFileToSupabase(file)
                     .then(function (url) {
-                      // Placeholder text'i sil
                       quill.deleteText(range.index, '⏳ Görsel yükleniyor...'.length);
                       quill.insertEmbed(range.index, 'image', url, 'user');
                       quill.setSelection(range.index + 1, 0, 'user');
@@ -132,34 +129,25 @@
                     });
                 };
                 input.click();
-              },
-              // Tablo: prompt ile satır/sütun
-              'table-custom': function () {
-                var rowsStr = prompt('Satır sayısı (başlık dahil):', '3');
-                if (!rowsStr) return;
-                var rows = parseInt(rowsStr, 10);
-                if (!rows || rows < 1 || rows > 30) { alert('Geçerli bir satır sayısı girin (1-30).'); return; }
-                var colsStr = prompt('Sütun sayısı:', '3');
-                if (!colsStr) return;
-                var cols = parseInt(colsStr, 10);
-                if (!cols || cols < 1 || cols > 10) { alert('Geçerli bir sütun sayısı girin (1-10).'); return; }
-                var range = quill.getSelection(true) || { index: quill.getLength() };
-                quill.clipboard.dangerouslyPasteHTML(range.index, buildTableHtml(rows, cols));
               }
             }
           }
         },
         placeholder: options.placeholder ||
-          'Bildirinizi buraya yazın. Word/Google Docs\'tan formatlı metni doğrudan yapıştırabilirsiniz.'
+          'Bildirinizi buraya yazın. Word/Google Docs\'tan formatlı metni doğrudan yapıştırabilirsiniz.\n\n⚠️ TABLOLAR İÇİN: Lütfen tablonuzun ekran görüntüsünü alıp toolbar\'daki resim (📷) butonu ile yükleyin.'
       });
 
-      // Tablo butonu için tooltip + ikon
-      var toolbarEl = quill.getModule('toolbar').container;
-      var tableBtn = toolbarEl.querySelector('.ql-table-custom');
-      if (tableBtn) {
-        tableBtn.innerHTML = '<svg viewBox="0 0 18 18"><rect x="3" y="3" width="12" height="12" stroke="currentColor" fill="none" stroke-width="1.5"/><line x1="3" y1="7.5" x2="15" y2="7.5" stroke="currentColor" stroke-width="1.5"/><line x1="3" y1="11.5" x2="15" y2="11.5" stroke="currentColor" stroke-width="1.5"/><line x1="7.5" y1="3" x2="7.5" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="11.5" y1="3" x2="11.5" y2="15" stroke="currentColor" stroke-width="1.5"/></svg>';
-        tableBtn.setAttribute('title', 'Tablo ekle');
-      }
+      // Tablo paste'i engelle: kullanıcıya uyarı göster, tabloyu kaldır
+      try {
+        quill.clipboard.addMatcher('TABLE', function (node, delta) {
+          setTimeout(function () {
+            alert('⚠️ TABLO ALGILANDI\n\nQuill editörü tablo desteklemez. Lütfen tablonuzun ekran görüntüsünü alıp toolbar\'daki "📷 Görsel" butonu ile yükleyin.\n\nBu, kitabınızın profesyonel görünümünü garanti eder.');
+          }, 100);
+          // Boş delta döndür → tablo silinir
+          var Delta = global.Quill.import('delta');
+          return new Delta();
+        });
+      } catch (e) { console.warn('[Bildiri] Clipboard matcher kurulumu başarısız:', e); }
 
       // Word count callback
       if (typeof options.onWordCount === 'function') {
