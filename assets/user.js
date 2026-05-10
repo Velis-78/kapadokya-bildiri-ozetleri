@@ -425,6 +425,79 @@
 
   let pendingSubmitData = null;
   let lastSubmittedRecord = null;
+  // Düzenleme modu state'i
+  let editingId = null;       // null → yeni gönderim; "BLD-XXX" → düzenleme
+  let editingEmail = null;    // RPC için doğrulanmış e-posta
+
+  // ---- Düzenleme modu yardımcıları ----
+  function enterEditMode(sub, email) {
+    editingId = sub.id;
+    editingEmail = email;
+    // Form'u bildiri verisiyle doldur
+    authorList.innerHTML = '';
+    affList.innerHTML = '';
+    (sub.authors || []).forEach(function (a) { authorList.appendChild(authorRow(a)); });
+    (sub.affiliations || []).forEach(function (af) { affList.appendChild(affRow(af)); });
+    if (!authorList.children.length) authorList.appendChild(authorRow());
+    if (!affList.children.length) affList.appendChild(affRow());
+    renumberAff();
+
+    document.getElementById('contactName').value = sub.contactName || '';
+    document.getElementById('contactEmail').value = sub.contactEmail || '';
+    document.getElementById('contactPhone').value = sub.contactPhone || '';
+    document.getElementById('contactInst').value = sub.contactInst || '';
+    document.getElementById('title').value = sub.title || '';
+    document.getElementById('keywords').value = (sub.keywords || []).join(', ');
+    document.getElementById('ackNoWithdraw').checked = !!sub.ackNoWithdraw;
+    document.getElementById('ackAttendance').checked = !!sub.ackAttendance;
+
+    if (abstractEditor && sub.abstract) {
+      abstractEditor.setData(sub.abstract);
+      abstractHtml = sub.abstract;
+    } else {
+      abstractHtml = sub.abstract || '';
+    }
+
+    // Banner aç + buton metnini değiştir
+    var banner = document.getElementById('editModeBanner');
+    var bannerId = document.getElementById('editModeBannerId');
+    var submitBtn = document.getElementById('submitBtn');
+    if (banner) banner.classList.remove('hidden');
+    if (bannerId) bannerId.textContent = sub.id;
+    if (submitBtn) submitBtn.textContent = 'Bildirimi Güncelle';
+
+    updateCounter();
+    setTimeout(function () { document.getElementById('basvuru').scrollIntoView({ behavior: 'smooth' }); }, 50);
+    showToast('Düzenleme moduna girdiniz: ' + sub.id, 'ok');
+  }
+
+  function exitEditMode() {
+    editingId = null;
+    editingEmail = null;
+    var banner = document.getElementById('editModeBanner');
+    var submitBtn = document.getElementById('submitBtn');
+    if (banner) banner.classList.add('hidden');
+    if (submitBtn) submitBtn.textContent = 'Bildiriyi Gönder';
+  }
+
+  // İptal butonu (banner içindeki) — sayfayı yüklendikten sonra event listener
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'cancelEditBtn') {
+      if (!confirm('Düzenlemeden çıkılsın mı? Yaptığınız değişiklikler kaybolur.')) return;
+      exitEditMode();
+      // Form'u temizle
+      document.getElementById('submissionForm').reset();
+      authorList.innerHTML = '';
+      affList.innerHTML = '';
+      authorList.appendChild(authorRow());
+      affList.appendChild(affRow());
+      renumberAff();
+      if (abstractEditor) abstractEditor.setData('');
+      abstractHtml = '';
+      updateCounter(0);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  });
 
   document.getElementById('downloadMySubmissionBtn').addEventListener('click', function () {
     if (!lastSubmittedRecord) { alert('İndirilecek bildiri bulunamadı.'); return; }
@@ -465,20 +538,48 @@
     const btn = this;
     btn.disabled = true;
     const oldText = btn.textContent;
-    btn.textContent = 'Gönderiliyor...';
+    btn.textContent = editingId ? 'Güncelleniyor...' : 'Gönderiliyor...';
     try {
-      const rec = await Promise.resolve(B.createSubmission(pendingSubmitData));
-      lastSubmittedRecord = rec;
-      clearDraft();
-      document.getElementById('successId').textContent = rec.id;
-      closeModal('reviewModal');
-      openModal('successModal');
-      document.getElementById('kpiCount').textContent = B.listSubmissions().length;
-      pendingSubmitData = null;
+      let rec;
+      if (editingId) {
+        // Düzenleme modu: kullanıcı kendi bildirisini güncelliyor
+        rec = await Promise.resolve(B.userUpdateSubmission(editingId, editingEmail, pendingSubmitData));
+        lastSubmittedRecord = rec;
+        document.getElementById('successId').textContent = rec.id;
+        // Başarı modalında metni güncelle
+        const successTitle = document.querySelector('#successModal h3');
+        if (successTitle) successTitle.textContent = 'Bildiriniz güncellendi';
+        closeModal('reviewModal');
+        openModal('successModal');
+        exitEditMode();
+        pendingSubmitData = null;
+        // Form'u temizle
+        document.getElementById('submissionForm').reset();
+        authorList.innerHTML = '';
+        affList.innerHTML = '';
+        authorList.appendChild(authorRow());
+        affList.appendChild(affRow());
+        renumberAff();
+        if (abstractEditor) abstractEditor.setData('');
+        abstractHtml = '';
+        updateCounter(0);
+      } else {
+        // Yeni gönderim
+        rec = await Promise.resolve(B.createSubmission(pendingSubmitData));
+        lastSubmittedRecord = rec;
+        clearDraft();
+        document.getElementById('successId').textContent = rec.id;
+        const successTitle = document.querySelector('#successModal h3');
+        if (successTitle) successTitle.textContent = 'Başvurunuz alındı';
+        closeModal('reviewModal');
+        openModal('successModal');
+        document.getElementById('kpiCount').textContent = B.listSubmissions().length;
+        pendingSubmitData = null;
+      }
     } catch (ex) {
       console.error(ex);
       closeModal('reviewModal');
-      showError(ex.message || 'Bildiri gönderilirken hata oluştu. Lütfen tekrar deneyin.');
+      showError(ex.message || 'İşlem sırasında hata oluştu. Lütfen tekrar deneyin.');
     } finally {
       btn.disabled = false;
       btn.textContent = oldText;
@@ -540,9 +641,31 @@
         '<div class="text-sm text-zinc-700 mt-3"><strong>Başlık:</strong> ' + B.escapeHtml(sub.title) + '</div>' +
         (sub.statusNote ? '<div class="text-sm text-zinc-700 mt-2"><strong>Not:</strong> ' + B.escapeHtml(sub.statusNote) + '</div>' : '') +
         '<div class="text-xs text-zinc-500 mt-3">Son güncelleme: ' + B.formatDate(sub.updatedAt) + '</div>' +
+        // Düzenleme butonu (sadece pending + submissions_open ise)
+        (function () {
+          const set = B.getSettings();
+          const canEdit = sub.status === 'pending' && (set.submissionsOpen !== false);
+          if (canEdit) {
+            return '<div class="rounded-lg p-3 mt-3 bg-lime-50 border-l-4 border-lime-500 text-sm text-lime-900">' +
+              '<strong>✏️ Düzenleme Hakkı:</strong> Bu bildiri henüz değerlendirme aşamasında. Son başvuru tarihine kadar bilgilerinizi güncelleyebilirsiniz.' +
+            '</div>';
+          } else if (sub.status !== 'pending') {
+            return '<div class="rounded-lg p-3 mt-3 bg-zinc-50 border-l-4 border-zinc-400 text-sm text-zinc-700">' +
+              'Bu bildiri ' + B.statusLabel(sub.status).toLowerCase() + ' edildiği için artık düzenlenemez.' +
+            '</div>';
+          }
+          return '<div class="rounded-lg p-3 mt-3 bg-zinc-50 border-l-4 border-zinc-400 text-sm text-zinc-700">' +
+            'Başvuru süresi sona erdi; düzenleme yapılamaz.' +
+          '</div>';
+        })() +
         '<div class="mt-3 flex justify-end gap-2 flex-wrap">' +
           '<button id="statusDownloadDocxBtn" class="btn btn-ghost btn-sm">DOCX</button>' +
-          '<button id="statusDownloadBtn" class="btn btn-accent btn-sm">📄 PDF Olarak İndir</button>' +
+          '<button id="statusDownloadBtn" class="btn btn-ghost btn-sm">📄 PDF</button>' +
+          (function () {
+            const set = B.getSettings();
+            const canEdit = sub.status === 'pending' && (set.submissionsOpen !== false);
+            return canEdit ? '<button id="statusEditBtn" class="btn btn-accent btn-sm">✏️ Düzenle</button>' : '';
+          })() +
         '</div>' +
       '</div>';
     const dl = document.getElementById('statusDownloadBtn');
@@ -558,6 +681,11 @@
       if (window.BildiriExport && window.BildiriExport.exportSubmissionDocx) {
         window.BildiriExport.exportSubmissionDocx(sub);
       }
+    });
+    const editBtn = document.getElementById('statusEditBtn');
+    if (editBtn) editBtn.addEventListener('click', function () {
+      closeModal('statusModal');
+      enterEditMode(sub, email);
     });
   });
 

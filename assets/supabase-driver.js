@@ -157,6 +157,32 @@
     return B.updateSubmission(id, { status: status, statusNote: note || '' }, actor);
   };
 
+  // Kullanıcının kendi bildirisini güncellemesi (RPC ile, güvenli)
+  // payload: subToRow formatında DB kolonu adlarıyla nesne
+  B.userUpdateSubmission = async function (id, email, patch) {
+    var dbPayload = subToRow(patch);
+    var { data, error } = await sb.rpc('user_update_submission', {
+      p_id: id,
+      p_email: email,
+      p_payload: dbPayload
+    });
+    if (error) {
+      console.error('[userUpdateSubmission] error:', error);
+      var msg = error.message || 'Düzenleme başarısız.';
+      // Backend exception mesajları kullanıcı dostu hale getir
+      if (msg.indexOf('BAŞVURU_KAPALI') !== -1) throw new Error('Başvuru süresi sona erdi. Düzenleme yapılamaz.');
+      if (msg.indexOf('BULUNAMADI') !== -1) throw new Error('Bu numara ve e-posta ile bir bildiri bulunamadı.');
+      if (msg.indexOf('KILITLI') !== -1) throw new Error('Bu bildiri zaten kabul/ret edilmiş; düzenlenemez.');
+      throw new Error(msg);
+    }
+    if (!data) throw new Error('Düzenleme yapılamadı (boş yanıt).');
+    var s = rowToSub(data);
+    var idx = cache.submissions.findIndex(function (x) { return x.id === id; });
+    if (idx >= 0) cache.submissions[idx] = s;
+    dispatchChange();
+    return s;
+  };
+
   // ---- Admin/Auth ----
   B.authenticate = async function (email, password) {
     const { data, error } = await sb.auth.signInWithPassword({ email: email, password: password });

@@ -138,6 +138,23 @@
     return updateSubmission(id, { status: status, statusNote: note || '' }, actor);
   }
 
+  // LocalStorage modunda kullanıcı kendi bildirisini güncelleyebilsin
+  function userUpdateSubmission(id, email, patch) {
+    var sub = getSubmission(id);
+    if (!sub) throw new Error('Bu numara ve e-posta ile bir bildiri bulunamadı.');
+    if ((sub.contactEmail || '').toLowerCase() !== (email || '').toLowerCase()) {
+      throw new Error('Bu numara ve e-posta ile bir bildiri bulunamadı.');
+    }
+    if (sub.status !== 'pending') {
+      throw new Error('Bu bildiri zaten kabul/ret edilmiş; düzenlenemez.');
+    }
+    var s = getSettings();
+    if (s.submissionsOpen === false) {
+      throw new Error('Başvuru süresi sona erdi. Düzenleme yapılamaz.');
+    }
+    return updateSubmission(id, patch, email);
+  }
+
   // -------- Admin yönetimi ----------
   function listAdmins() {
     return read(STORAGE_KEYS.admins, []);
@@ -315,6 +332,7 @@
     updateSubmission: updateSubmission,
     deleteSubmission: deleteSubmission,
     changeStatus: changeStatus,
+    userUpdateSubmission: userUpdateSubmission,
     // Admin
     listAdmins: listAdmins,
     authenticate: authenticate,
