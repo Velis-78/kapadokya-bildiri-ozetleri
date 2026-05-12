@@ -122,6 +122,19 @@ label.label {
 }
 .btn-danger:hover { background: #be123c; }
 
+/* Konuşma Özeti butonu — mavi/sky teması, talk badge ile uyumlu */
+.btn-talk {
+  background: #0ea5e9;
+  color: #fff;
+}
+.btn-talk:hover { background: #0284c7; }
+.btn-talk-soft {
+  background: #f0f9ff;
+  color: #075985;
+  border-color: #bae6fd;
+}
+.btn-talk-soft:hover { background: #e0f2fe; border-color: #7dd3fc; }
+
 .btn-sm { padding: 6px 10px; font-size: 12px; border-radius: 8px; }
 
 /* Badge */

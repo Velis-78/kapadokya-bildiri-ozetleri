@@ -472,14 +472,30 @@
     }
   }
 
-  // Hero "Bildiri Gönder" linkini intercept et — önce tip sor
+  // Direkt tip linki: data-direct-type="talk" veya "poster" → modal'ı atla, forma git
   document.addEventListener('click', function (e) {
+    const directBtn = e.target.closest('[data-direct-type]');
+    if (directBtn) {
+      // Düzenleme modundaysa, tip değiştirilemez — sadece scroll
+      if (editingId) {
+        e.preventDefault();
+        document.getElementById('basvuru').scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      const dt = directBtn.getAttribute('data-direct-type');
+      currentType = (dt === 'talk') ? 'talk' : 'poster';
+      typeChosenForSession = true;
+      refreshTypeBanner();
+      e.preventDefault();
+      setTimeout(function () {
+        document.getElementById('basvuru').scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+      return;
+    }
+    // Hero "Bildiri Gönder" linki — modal soru göster (eğer tip henüz seçilmediyse)
     const target = e.target;
-    // Hero "Bildiri Gönder" linki (#basvuru hash linki)
     if (target && target.tagName === 'A' && target.getAttribute('href') === '#basvuru') {
-      // Eğer düzenleme modundaysa, modal sorma — direkt forma git
       if (editingId) return;
-      // Eğer bu oturumda zaten tip seçildiyse, tekrar sorma — direkt git
       if (typeChosenForSession) return;
       e.preventDefault();
       openTypeChooser();

@@ -1,8 +1,14 @@
 # 📘 Bildiri Sistemi — Sıfırdan Kurulum ve Kullanım Rehberi
 
-**Sistem:** Herediter Anjiyoödem ve İmmün Yetmezliklere Zor Olgularla Pratik Çözümler — Poster Bildiri Başvuru ve Yönetim Sistemi
+**Sistem:** Herediter Anjiyoödem ve İmmün Yetmezliklere Zor Olgularla Pratik Çözümler — Poster Bildiri / Konuşma Özeti Başvuru ve Yönetim Sistemi
 **Subdomain:** `https://hao-immunyetmezlik-poster.aid.com.tr/`
-**Mevcut sürüm:** v22
+**Mevcut sürüm:** v25
+
+## 📜 Sürüm Geçmişi (özet)
+- **v22** — TDZ bug fix + RLS settings onarımı
+- **v23** — Bildiri sorgulama → düzenleme akışı (RPC ile güvenli)
+- **v24** — Bildiri / Konuşma Özeti ayrımı (type kolonu, modal soru, 4 kitap türü, admin tip değiştirme)
+- **v25** — "🎤 Konuşma Özeti Yükle" direkt giriş butonu (üst nav + hero)
 
 Bu rehber, sistemi sıfırdan kurarken **hatasız** ilerlemen için yazıldı. Tüm denenmiş ve başarısız yollar bilerek elenmiş; sadece çalışan akış var.
 
@@ -34,6 +40,8 @@ Bu rehber, sistemi sıfırdan kurarken **hatasız** ilerlemen için yazıldı. T
 ├── supabase-schema.sql      # SQL şeması (1 kez çalıştırılır)
 ├── supabase-fix.sql         # RLS recursion düzeltmesi
 ├── supabase-fix-settings.sql # Settings UPDATE 406 düzeltmesi
+├── supabase-fix-edit.sql    # Kullanıcı kendi bildirisini düzenleme RPC'si (v23)
+├── supabase-add-type.sql    # submissions.type kolonu migration (v24)
 ├── bildiri-sistemi.zip      # Tüm dosyaları içeren güncel paket
 └── assets/
     ├── app.js               # Ortak veri katmanı + utils
@@ -137,6 +145,16 @@ create policy "Public can read posters-media"
 SQL Editor → New query → `supabase-fix.sql` içeriğini yapıştır → Run.
 
 > **Neden gerekli:** Schema'daki orijinal RLS policy'leri sonsuz döngüye girer. Bu fix `is_admin()` ve `is_super_admin()` fonksiyonlarını SECURITY DEFINER ile yeniden tanımlar.
+
+### 1.8b Kullanıcı düzenleme RPC fonksiyonu (v23+)
+SQL Editor → `supabase-fix-edit.sql` → Run.
+
+> **Neden gerekli:** Bildiri sahibinin son başvuru tarihine kadar kendi bildirisini düzenleyebilmesi için. RPC içinde e-posta + ID + status kontrolü yapılır.
+
+### 1.8c Tip kolonu migration (v24+)
+SQL Editor → `supabase-add-type.sql` → Run.
+
+> **Neden gerekli:** submissions.type kolonu (`poster` veya `talk`) — modal seçim ve "Konuşma Özeti Yükle" butonu için.
 
 ### 1.9 API anahtarlarını kopyala
 1. Sol alt → **Project Settings** (dişli) → **API**
@@ -429,5 +447,64 @@ Her ✓ doğruysa sistem hazır.
 - **Sorun çıktığında ilk yapılacak:** F12 → Console → kırmızı hata satırını oku. Yukarıdaki "Sorun Giderme" listesinde benzer pattern'i bul.
 - **Supabase backup:** Düzenli olarak Admin → Ayarlar → "Yedeği indir" ile manuel yedek almanı tavsiye ederim. Supabase free planda 7 gün otomatik backup tutar, ama dışa aktarmak güvenli.
 - **Maliyet:** Şu anki yapı **tamamen ücretsiz**. Bildiri sayısı 1000+ olursa Supabase 500 MB DB sınırı zorlanabilir, o noktada Pro plana geçilir ($25/ay).
+
+---
+
+# 🆕 v23-v25 Yeni Özelliklerin Kullanımı
+
+## v23 — Kullanıcı Düzenleme
+Bildiri sahibi şu adımlarla kendi bildirisini düzenleyebilir:
+1. Hero → **"Bildiri Sorgula"** butonu
+2. Bildiri No + e-posta gir → Sorgula
+3. Sonuçta yeşil banner ve **✏️ Düzenle** butonu görünür (sadece `pending` + `submissions_open=true` iken)
+4. Düzenle → form bildiri verisiyle doldurulu açılır, mavi "Düzenleme Modu" banner'ı
+5. Bilgileri değiştir → **Bildirimi Güncelle**
+
+**Güvenlik:** SQL fonksiyonu `user_update_submission` içeride e-posta + status + open kontrolü yapar; başkası başkasının bildirisine erişemez.
+
+## v24 — Tip Ayrımı (Poster vs Konuşma Özeti)
+
+**Kullanıcı tarafı:**
+- **"Bildiri Gönder"** tıklayınca modal soru çıkar: Poster mı, Konuşma mı?
+- Seçimden sonra form'da banner: 📋 Poster veya 🎤 Konuşma
+- Banner'da "Değiştir" ile fikir değiştirilebilir
+- Submit butonu türe göre güncellenir
+
+**Admin tarafı:**
+- Tablo satırlarında **renk-kodlu tip badge'i** (yeşil/mavi)
+- Bildiriler sekmesinde **"Tür" filtresi** dropdown'ı
+- Detay modalında **"Tür" select'i** — admin tipi değiştirebilir
+- Genel Bakış'ta tip dağılımı kırılımı
+
+**Kitap üretme (4 seçenek):**
+- 📚 **Birleşik Kitap PDF** — Posterler önce, Konuşmalar sonra; her bölüm kendi kapak sayfasıyla
+- 📋 Poster Kitabı PDF — sadece kabul edilen posterler
+- 🎤 Konuşma Özetleri PDF — sadece kabul edilen konuşmalar
+- 📕 Tüm Kabul (PDF) — eski format
+
+## v25 — Konuşma Özeti Direkt Giriş
+
+Konuşmacılar için modal sorusu olmadan direkt giriş:
+- **Üst nav'da** (md+ ekranlarda) **"🎤 Konuşma Özeti"** mavi buton
+- **Hero'da** **"🎤 Konuşma Özeti Yükle"** mavi buton (mobil dahil her ekranda)
+- Tıklayınca modal açılmaz → direkt forma scroll → 🎤 Konuşma banner'ı + type='talk' seçili
+
+**Mevcut akışlar bozulmadı:** "Bildiri Gönder" hâlâ modal sorusu çıkarır, fikir değiştirme banner'ı çalışır.
+
+---
+
+# 🚨 Sıfırdan Kurulumda Çalıştırılacak SQL Sırası
+
+Sıfırdan bir sistem kuruyorsan, Aşama 1'de SQL Editor'da **bu sırayla** çalıştır:
+
+1. `supabase-schema.sql` — temel şema (tablolar, RLS, audit_log, settings)
+2. `supabase-fix.sql` — RLS recursion düzeltmesi (is_admin, is_super_admin)
+3. `supabase-fix-edit.sql` — Kullanıcı düzenleme RPC fonksiyonu
+4. `supabase-add-type.sql` — submissions.type kolonu
+
+İlk admin'i de oluşturduktan sonra (Adım 1.4-1.5), gerekirse:
+5. `supabase-fix-settings.sql` — Eğer "Ayarlar kaydedilemedi" hatası alırsanız (admin role onarımı)
+
+---
 
 İyi yönetimler! 🎉
