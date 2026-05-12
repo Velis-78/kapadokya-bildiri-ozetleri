@@ -135,6 +135,13 @@
     document.getElementById('ov-pending').textContent = subs.filter(function (s) { return s.status === 'pending'; }).length;
     document.getElementById('ov-accepted').textContent = subs.filter(function (s) { return s.status === 'accepted'; }).length;
     document.getElementById('ov-rejected').textContent = subs.filter(function (s) { return s.status === 'rejected'; }).length;
+    // Tür dağılımı (varsa)
+    const ovTypeBreak = document.getElementById('ov-type-breakdown');
+    if (ovTypeBreak) {
+      const posters = subs.filter(function (s) { return (s.type || 'poster') === 'poster'; }).length;
+      const talks = subs.filter(function (s) { return s.type === 'talk'; }).length;
+      ovTypeBreak.innerHTML = '📋 Poster: <strong>' + posters + '</strong>  •  🎤 Konuşma: <strong>' + talks + '</strong>';
+    }
 
     const recent = subs.slice().sort(function (a, b) { return b.createdAt.localeCompare(a.createdAt); }).slice(0, 6);
     const wrap = document.getElementById('ov-recent');
@@ -144,8 +151,13 @@
     }
     wrap.innerHTML = recent.map(function (s) {
       const c = B.statusColor(s.status);
+      const tp = s.type || 'poster';
+      const tc = B.typeBadgeColor(tp);
       return '<div class="py-3 flex items-start gap-3">' +
-        '<span class="badge ' + c + ' ring-1">' + B.statusLabel(s.status) + '</span>' +
+        '<div class="flex flex-col gap-1">' +
+          '<span class="badge ' + c + ' ring-1">' + B.statusLabel(s.status) + '</span>' +
+          '<span class="badge ' + tc + ' ring-1 text-[10px]">' + B.typeIcon(tp) + ' ' + B.typeLabel(tp) + '</span>' +
+        '</div>' +
         '<div class="flex-1 min-w-0">' +
           '<div class="text-sm font-medium text-zinc-900 truncate">' + B.escapeHtml(s.title || '(başlıksız)') + '</div>' +
           '<div class="text-xs text-zinc-500 truncate">' + B.escapeHtml(s.id) + ' · ' + B.escapeHtml(s.contactName || '-') + ' · ' + B.formatDate(s.createdAt) + '</div>' +
@@ -204,7 +216,45 @@
     });
     if (!all.length) { alert('Henüz bildiri yok.'); return; }
     showToast('Taslak PDF kitap hazırlanıyor...', 'ok');
-    E.exportBookPdf(all);
+    E.exportBookPdf(all, { title: 'Birleşik Kitap (Taslak)' });
+  });
+
+  // YENİ: Poster Kitabı (sadece poster + accepted)
+  const posterBtn = document.getElementById('qa-export-poster-pdf');
+  if (posterBtn) posterBtn.addEventListener('click', function () {
+    const list = B.listSubmissions().filter(function (s) {
+      return s.status === 'accepted' && (s.type || 'poster') === 'poster';
+    });
+    if (!list.length) { alert('Henüz kabul edilmiş poster bildirisi yok.'); return; }
+    list.sort(function (a, b) { return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }); });
+    showToast('Poster Kitabı PDF hazırlanıyor...', 'ok');
+    E.exportBookPdf(list, { title: 'Poster Bildirileri Kitabı', kind: 'poster' });
+  });
+
+  // YENİ: Konuşma Özetleri Kitabı (sadece talk + accepted)
+  const talkBtn = document.getElementById('qa-export-talk-pdf');
+  if (talkBtn) talkBtn.addEventListener('click', function () {
+    const list = B.listSubmissions().filter(function (s) {
+      return s.status === 'accepted' && s.type === 'talk';
+    });
+    if (!list.length) { alert('Henüz kabul edilmiş konuşma özeti yok.'); return; }
+    list.sort(function (a, b) { return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }); });
+    showToast('Konuşma Özetleri Kitabı PDF hazırlanıyor...', 'ok');
+    E.exportBookPdf(list, { title: 'Konuşma Özetleri Kitabı', kind: 'talk' });
+  });
+
+  // YENİ: Birleşik (Poster önce, Talk sonra) — kabul edilenler
+  const combinedBtn = document.getElementById('qa-export-combined-pdf');
+  if (combinedBtn) combinedBtn.addEventListener('click', function () {
+    const accepted = B.listSubmissions().filter(function (s) { return s.status === 'accepted'; });
+    if (!accepted.length) { alert('Henüz kabul edilmiş bildiri yok.'); return; }
+    const posters = accepted.filter(function (s) { return (s.type || 'poster') === 'poster'; })
+      .sort(function (a, b) { return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }); });
+    const talks = accepted.filter(function (s) { return s.type === 'talk'; })
+      .sort(function (a, b) { return (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }); });
+    const ordered = posters.concat(talks);
+    showToast('Birleşik kitap (Poster + Konuşma) PDF hazırlanıyor...', 'ok');
+    E.exportBookPdf(ordered, { title: 'Bildiri ve Konuşma Özetleri Kitabı', kind: 'combined', posterCount: posters.length, talkCount: talks.length });
   });
 
   // ---- Submissions ----
@@ -214,8 +264,10 @@
     const txt = (document.getElementById('filterText').value || '').toLocaleLowerCase('tr-TR').trim();
     const st = document.getElementById('filterStatus').value;
     const sort = document.getElementById('filterSort').value;
+    const tp = (document.getElementById('filterType') && document.getElementById('filterType').value) || '';
     let list = B.listSubmissions();
     if (st) list = list.filter(function (s) { return s.status === st; });
+    if (tp) list = list.filter(function (s) { return (s.type || 'poster') === tp; });
     if (txt) {
       list = list.filter(function (s) {
         const blob = [
@@ -247,10 +299,16 @@
       empty.classList.add('hidden');
       tbody.innerHTML = list.map(function (s) {
         const c = B.statusColor(s.status);
+        const tp = s.type || 'poster';
+        const tc = B.typeBadgeColor(tp);
+        const ti = B.typeIcon(tp);
+        const tl = B.typeLabel(tp);
         const presenter = (s.authors || []).find(function (a) { return a.presenter; });
         const presName = presenter ? presenter.fullName : ((s.authors || [])[0] || {}).fullName || '-';
         return '<tr>' +
-          '<td><div class="font-mono text-xs text-zinc-500">' + B.escapeHtml(s.id) + '</div></td>' +
+          '<td><div class="font-mono text-xs text-zinc-500">' + B.escapeHtml(s.id) + '</div>' +
+            '<div class="mt-1"><span class="badge ' + tc + ' ring-1" title="' + tl + '">' + ti + ' ' + tl + '</span></div>' +
+          '</td>' +
           '<td>' +
             '<div class="font-medium text-zinc-900 line-clamp-2">' + B.escapeHtml(s.title || '(başlıksız)') + '</div>' +
             '<div class="text-xs text-zinc-500 mt-0.5">Sunan: ' + B.escapeHtml(presName) + ' · ' + B.escapeHtml(s.contactEmail || '-') + '</div>' +
@@ -312,13 +370,16 @@
     });
   }
 
-  ['filterText', 'filterStatus', 'filterSort'].forEach(function (id) {
-    document.getElementById(id).addEventListener('input', renderSubmissions);
-    document.getElementById(id).addEventListener('change', renderSubmissions);
+  ['filterText', 'filterStatus', 'filterType', 'filterSort'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', renderSubmissions);
+    el.addEventListener('change', renderSubmissions);
   });
   document.getElementById('clearFilters').addEventListener('click', function () {
     document.getElementById('filterText').value = '';
     document.getElementById('filterStatus').value = '';
+    const ft = document.getElementById('filterType'); if (ft) ft.value = '';
     document.getElementById('filterSort').value = 'new';
     renderSubmissions();
   });
@@ -396,7 +457,16 @@
         '</div>' +
       '</div>' +
 
-      '<div class="grid sm:grid-cols-2 gap-3 mt-4">' +
+      '<div class="grid sm:grid-cols-3 gap-3 mt-4">' +
+        '<div>' +
+          '<label class="label">Tür</label>' +
+          '<select id="d-type" class="field">' +
+            ['poster','talk'].map(function (k) {
+              const cur = s.type || 'poster';
+              return '<option value="' + k + '" ' + (cur === k ? 'selected' : '') + '>' + B.typeIcon(k) + ' ' + B.typeLabel(k) + (k === 'talk' ? ' Özeti' : ' Bildirisi') + '</option>';
+            }).join('') +
+          '</select>' +
+        '</div>' +
         '<div>' +
           '<label class="label">Durum</label>' +
           '<select id="d-status" class="field">' +
@@ -453,11 +523,14 @@
       const newAbstract = detailEditor ? detailEditor.getData() : currentAbstractHtml;
       const cleanAbstract = window.BildiriSanitize ? window.BildiriSanitize.sanitize(newAbstract) : newAbstract;
       try {
+        const typeSel = document.getElementById('d-type');
+        const newType = typeSel ? (typeSel.value === 'talk' ? 'talk' : 'poster') : (s.type || 'poster');
         await Promise.resolve(B.updateSubmission(s.id, {
           title: document.getElementById('d-title').value.trim(),
           abstract: cleanAbstract,
           status: document.getElementById('d-status').value,
-          statusNote: document.getElementById('d-note').value.trim()
+          statusNote: document.getElementById('d-note').value.trim(),
+          type: newType
         }, actor()));
         if (detailEditor) { try { await detailEditor.destroy(); } catch (e) {} detailEditor = null; }
         closeModal();

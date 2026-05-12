@@ -6,6 +6,7 @@
 -- 1) Bildiriler tablosu
 create table if not exists public.submissions (
   id text primary key,                     -- BLD-1001 formatı
+  type text not null default 'poster',     -- poster | talk (konuşma özeti)
   status text not null default 'pending',  -- pending | accepted | rejected | revision
   status_note text default '',
   title text not null,
@@ -26,6 +27,11 @@ create table if not exists public.submissions (
 create index if not exists submissions_status_idx on public.submissions(status);
 create index if not exists submissions_created_idx on public.submissions(created_at desc);
 create index if not exists submissions_email_idx on public.submissions(contact_email);
+create index if not exists submissions_type_idx on public.submissions(type);
+
+-- Eski kurulumlar için: kolon yoksa ekle
+alter table public.submissions add column if not exists type text default 'poster';
+update public.submissions set type = 'poster' where type is null;
 
 -- 2) Yöneticiler tablosu (Auth ile birlikte ek profil bilgisi)
 -- Not: Şifreler Supabase Auth tarafından yönetilir; burada sadece rol ve isim tutulur.

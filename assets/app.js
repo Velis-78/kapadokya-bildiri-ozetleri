@@ -103,6 +103,7 @@
     const record = Object.assign(
       {
         id: id,
+        type: 'poster', // poster | talk (default poster — geriye uyumlu)
         status: 'pending', // pending | accepted | rejected | revision
         statusNote: '',
         createdAt: now,
@@ -110,9 +111,11 @@
       },
       payload
     );
+    // type kontrolü
+    if (record.type !== 'poster' && record.type !== 'talk') record.type = 'poster';
     all.push(record);
     write(STORAGE_KEYS.submissions, all);
-    audit('create', id, payload.contactEmail || '-');
+    audit('create', id, payload.contactEmail || '-', record.type);
     return record;
   }
 
@@ -311,6 +314,21 @@
     );
   }
 
+  function typeLabel(t) {
+    return ({ poster: 'Poster', talk: 'Konuşma' })[t] || 'Poster';
+  }
+
+  function typeIcon(t) {
+    return ({ poster: '📋', talk: '🎤' })[t] || '📋';
+  }
+
+  function typeBadgeColor(t) {
+    return ({
+      poster: 'bg-lime-100 text-lime-800 ring-lime-200',
+      talk: 'bg-sky-100 text-sky-800 ring-sky-200'
+    })[t] || 'bg-zinc-100 text-zinc-700 ring-zinc-200';
+  }
+
   function statusColor(s) {
     return (
       {
@@ -355,6 +373,9 @@
     formatDate: formatDate,
     statusLabel: statusLabel,
     statusColor: statusColor,
+    typeLabel: typeLabel,
+    typeIcon: typeIcon,
+    typeBadgeColor: typeBadgeColor,
     hashSync: hashSync
   };
 

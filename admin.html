@@ -8,7 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.8/dist/purify.min.js"></script>
-  <link rel="stylesheet" href="assets/style.css?v=23" />
+  <link rel="stylesheet" href="assets/style.css?v=24" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2384cc16'/%3E%3Ctext x='50' y='66' text-anchor='middle' font-family='Arial' font-size='52' font-weight='700' fill='%231a2e05'%3EA%3C/text%3E%3C/svg%3E" />
   <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
@@ -68,7 +68,7 @@
             <span id="userBadge"></span>
           </span>
           <button id="logoutBtn" class="btn btn-ghost btn-sm">Çıkış</button>
-          <span class="text-xs text-zinc-400 ml-1" title="Sürüm">v23</span>
+          <span class="text-xs text-zinc-400 ml-1" title="Sürüm">v24</span>
         </div>
       </div>
       <nav class="border-t border-zinc-200">
@@ -85,7 +85,11 @@
     <!-- TAB: GENEL BAKIŞ -->
     <div id="tab-overview" class="tab-pane max-w-7xl mx-auto px-5 py-8">
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="card p-5"><div class="text-xs text-zinc-500">Toplam</div><div id="ov-total" class="text-3xl font-semibold mt-1">0</div></div>
+        <div class="card p-5">
+          <div class="text-xs text-zinc-500">Toplam</div>
+          <div id="ov-total" class="text-3xl font-semibold mt-1">0</div>
+          <div id="ov-type-breakdown" class="text-xs text-zinc-500 mt-2"></div>
+        </div>
         <div class="card p-5"><div class="text-xs text-zinc-500">Beklemede</div><div id="ov-pending" class="text-3xl font-semibold mt-1 text-amber-600">0</div></div>
         <div class="card p-5"><div class="text-xs text-zinc-500">Kabul</div><div id="ov-accepted" class="text-3xl font-semibold mt-1 text-emerald-600">0</div></div>
         <div class="card p-5"><div class="text-xs text-zinc-500">Ret</div><div id="ov-rejected" class="text-3xl font-semibold mt-1 text-rose-600">0</div></div>
@@ -98,17 +102,20 @@
         <div class="card p-5">
           <h3 class="font-semibold">Hızlı eylemler</h3>
           <div class="mt-4 grid grid-cols-2 gap-3">
-            <button class="btn btn-accent col-span-2" id="qa-export-book-pdf" title="Kabul edilen bildiriler — tablolar, görseller ve formatlar korunur (PDF)">📕 Bildiri Kitabı PDF (Kabul Edilenler)</button>
-            <button class="btn btn-ghost col-span-2" id="qa-export-book-pdf-all" title="Tüm bildiriler PDF taslak">📘 Bildiri Kitabı PDF (Tümü — taslak)</button>
+            <button class="btn btn-accent col-span-2" id="qa-export-combined-pdf" title="Kabul edilen poster + konuşma — birleşik kitap">📚 Birleşik Kitap PDF (Poster + Konuşma)</button>
+            <button class="btn btn-ghost" id="qa-export-poster-pdf" title="Sadece kabul edilen poster bildirileri">📋 Poster Kitabı PDF</button>
+            <button class="btn btn-ghost" id="qa-export-talk-pdf" title="Sadece kabul edilen konuşma özetleri">🎤 Konuşma Özetleri PDF</button>
+            <button class="btn btn-ghost" id="qa-export-book-pdf" title="Sadece kabul edilenler (eski format)">📕 Tüm Kabul (PDF)</button>
+            <button class="btn btn-ghost" id="qa-export-book-pdf-all" title="Tüm bildiriler PDF taslak">📘 PDF Taslak (Tümü)</button>
             <button class="btn btn-ghost" id="qa-export-book-accepted" title="DOCX: format kaybı olur, sadece düz metin">📄 DOCX (Düz Metin)</button>
-            <button class="btn btn-ghost" id="qa-export-book-all" title="Tüm bildiriler DOCX taslak">📄 DOCX Taslak (Tümü)</button>
+            <button class="btn btn-ghost" id="qa-export-book-all" title="Tüm bildiriler DOCX taslak">📄 DOCX Taslak</button>
             <button class="btn btn-ghost" id="qa-export-xlsx">Tümü Excel</button>
             <button class="btn btn-ghost" id="qa-export-accepted-xlsx">Kabul Edilenler Excel</button>
             <a class="btn btn-ghost" href="index.html" target="_blank">Başvuru sayfasını aç ↗</a>
             <button class="btn btn-ghost" id="qa-print-list">Listeyi yazdır</button>
           </div>
           <div class="divider"></div>
-          <div class="text-xs text-zinc-500" id="ov-tip">📕 <strong>PDF önerilen formattır</strong> — tablolar, görseller ve formatlar tamamen korunur. DOCX yalnızca düz metin içerir (zenginlik kaybolur, ama Word'de düzenlenebilir).</div>
+          <div class="text-xs text-zinc-500" id="ov-tip">📚 <strong>Birleşik Kitap önerilen seçenektir</strong> — Poster bildirileri ve Konuşma Özetleri tek dosyada, her bölüm kendi başlığıyla ayrılmış olarak. İhtiyaca göre ayrı kitap dosyaları da üretilebilir.</div>
         </div>
       </div>
     </div>
@@ -130,6 +137,14 @@
                 <option value="accepted">Kabul</option>
                 <option value="rejected">Ret</option>
                 <option value="revision">Revizyon</option>
+              </select>
+            </div>
+            <div>
+              <label class="label" for="filterType">Tür</label>
+              <select id="filterType" class="field">
+                <option value="">Tüm Türler</option>
+                <option value="poster">📋 Poster</option>
+                <option value="talk">🎤 Konuşma</option>
               </select>
             </div>
             <div>
@@ -302,13 +317,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="assets/supabase-config.js?v=23"></script>
-  <script src="assets/app.js?v=23"></script>
-  <script src="assets/supabase-driver.js?v=23"></script>
-  <script src="assets/sanitize.js?v=23"></script>
-  <script src="assets/editor.js?v=23"></script>
-  <script src="assets/export.js?v=23"></script>
-  <script src="assets/admin.js?v=23"></script>
+  <script src="assets/supabase-config.js?v=24"></script>
+  <script src="assets/app.js?v=24"></script>
+  <script src="assets/supabase-driver.js?v=24"></script>
+  <script src="assets/sanitize.js?v=24"></script>
+  <script src="assets/editor.js?v=24"></script>
+  <script src="assets/export.js?v=24"></script>
+  <script src="assets/admin.js?v=24"></script>
   <script>
     // Supabase verisi geldiğinde admin panelini yenile
     document.addEventListener('bildiri:loaded', function () {

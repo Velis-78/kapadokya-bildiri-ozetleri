@@ -587,7 +587,8 @@
     win.document.close();
   }
 
-  function exportBookPdf(subs) {
+  function exportBookPdf(subs, options) {
+    options = options || {};
     if (!subs || !subs.length) {
       alert('Kitaba eklenecek bildiri yok.');
       return;
@@ -595,6 +596,8 @@
     var settings = global.Bildiri.getSettings();
     var eventTitle = settings.eventTitle || 'Bildiri Kitabı';
     var organizer = settings.organizer || '';
+    var bookTitle = options.title || 'Poster Bildirileri Kitabı';
+    var bookKind = options.kind || 'poster'; // poster | talk | combined
 
     var tocItems = subs.map(function (s, i) {
       var presenter = (s.authors || []).find(function (a) { return a.presenter; }) || (s.authors || [])[0] || {};
@@ -612,27 +615,58 @@
       return;
     }
 
+    var coverSub = 'POSTER BİLDİRİ ÖZETLERİ';
+    if (bookKind === 'talk') coverSub = 'KONUŞMA ÖZETLERİ';
+    else if (bookKind === 'combined') coverSub = 'BİLDİRİ ve KONUŞMA ÖZETLERİ';
+
     var bodyHtml =
       // Kapak
       '<div class="pdf-cover">' +
         '<h1>' + escHtml(eventTitle) + '</h1>' +
-        '<div class="pdf-cover-sub">POSTER BİLDİRİ ÖZETLERİ</div>' +
+        '<div class="pdf-cover-sub">' + escHtml(coverSub) + '</div>' +
         (organizer ? '<div class="pdf-cover-org">' + escHtml(organizer) + '</div>' : '') +
       '</div>' +
       '<div class="pdf-break">' +
         '<h1 class="pdf-title">İÇİNDEKİLER</h1>' +
         '<div style="margin-top:18px">' + tocItems + '</div>' +
       '</div>' +
-      subs.map(function (s) {
-        return '<div class="pdf-break">' + buildSubmissionPdfHtml(s) + '</div>';
-      }).join('');
+      (function () {
+        // Combined modda iki bölüm ayırıcı
+        if (bookKind === 'combined') {
+          var posterCount = options.posterCount || 0;
+          var talkCount = options.talkCount || 0;
+          var html = '';
+          var sawTalk = false;
+          subs.forEach(function (s, i) {
+            // İlk poster veya ilk talk öncesi bölüm başlığı
+            if (i === 0 && posterCount > 0) {
+              html += '<div class="pdf-break pdf-section-cover">' +
+                '<div style="text-align:center;padding-top:35%"><h1 style="font-size:24pt;font-weight:700">📋 POSTER BİLDİRİLERİ</h1>' +
+                '<div style="font-size:13pt;color:#525252;margin-top:8px">' + posterCount + ' bildiri</div></div>' +
+              '</div>';
+            }
+            if (!sawTalk && s.type === 'talk' && talkCount > 0) {
+              html += '<div class="pdf-break pdf-section-cover">' +
+                '<div style="text-align:center;padding-top:35%"><h1 style="font-size:24pt;font-weight:700">🎤 KONUŞMA ÖZETLERİ</h1>' +
+                '<div style="font-size:13pt;color:#525252;margin-top:8px">' + talkCount + ' özet</div></div>' +
+              '</div>';
+              sawTalk = true;
+            }
+            html += '<div class="pdf-break">' + buildSubmissionPdfHtml(s) + '</div>';
+          });
+          return html;
+        }
+        return subs.map(function (s) {
+          return '<div class="pdf-break">' + buildSubmissionPdfHtml(s) + '</div>';
+        }).join('');
+      })();
 
     var html =
       '<!doctype html><html lang="tr"><head><meta charset="utf-8">' +
       printStyles(eventTitle + ' — Bildiri Kitabı') +
       '</head><body>' +
       '<div class="print-toolbar">' +
-        '<strong>📕 Bildiri Kitabı Önizlemesi (' + subs.length + ' bildiri):</strong> "Yazdır / PDF Olarak Kaydet" düğmesine basıp hedefte <em>"PDF olarak kaydet"</em> seçin.' +
+        '<strong>📕 ' + escHtml(bookTitle) + ' (' + subs.length + ' kayıt):</strong> "Yazdır / PDF Olarak Kaydet" düğmesine basıp hedefte <em>"PDF olarak kaydet"</em> seçin.' +
         '<div style="margin-top:10px">' +
           '<button onclick="window.print()">🖨️ Yazdır / PDF Olarak Kaydet</button>' +
           '<button class="secondary" onclick="window.close()">Kapat</button>' +

@@ -277,6 +277,7 @@
     }
 
     return {
+      type: (currentType === 'talk' ? 'talk' : 'poster'),
       contactName: document.getElementById('contactName').value.trim(),
       contactEmail: document.getElementById('contactEmail').value.trim(),
       contactPhone: document.getElementById('contactPhone').value.trim(),
@@ -428,11 +429,98 @@
   // Düzenleme modu state'i
   let editingId = null;       // null → yeni gönderim; "BLD-XXX" → düzenleme
   let editingEmail = null;    // RPC için doğrulanmış e-posta
+  // Bildiri türü state'i
+  let currentType = 'poster'; // 'poster' veya 'talk' — modal'da seçilir
+  let typeChosenForSession = false; // kullanıcı modal'da seçim yaptı mı
+
+  // Form üst banner'ını güncelle
+  function refreshTypeBanner() {
+    const banner = document.getElementById('typeBanner');
+    const label = document.getElementById('typeBannerLabel');
+    const desc = document.getElementById('typeBannerDesc');
+    if (!banner || !label) return;
+    if (currentType === 'talk') {
+      label.innerHTML = '🎤 <strong>Konuşma Özeti</strong> Gönderiyorsunuz';
+      if (desc) desc.textContent = 'Sempozyumda konuşmacı olarak davet edildiğiniz oturum için özet.';
+      banner.classList.remove('hidden', 'border-lime-500', 'bg-lime-50');
+      banner.classList.add('border-sky-500', 'bg-sky-50');
+    } else {
+      label.innerHTML = '📋 <strong>Poster Bildirisi</strong> Gönderiyorsunuz';
+      if (desc) desc.textContent = 'Sempozyumda poster sunumu yapacaksınız.';
+      banner.classList.remove('hidden', 'border-sky-500', 'bg-sky-50');
+      banner.classList.add('border-lime-500', 'bg-lime-50');
+    }
+    // Submit butonunda küçük tür ipucu
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn && !editingId) {
+      submitBtn.textContent = (currentType === 'talk' ? 'Konuşma Özetini Gönder' : 'Bildiriyi Gönder');
+    }
+  }
+
+  // ---- Tip seçim modali ----
+  function openTypeChooser() {
+    const modal = document.getElementById('typeChooserModal');
+    if (modal) {
+      // Mevcut seçimi göster
+      const radioPoster = document.querySelector('input[name="submissionType"][value="poster"]');
+      const radioTalk = document.querySelector('input[name="submissionType"][value="talk"]');
+      if (radioPoster && radioTalk) {
+        if (currentType === 'talk') radioTalk.checked = true;
+        else radioPoster.checked = true;
+      }
+      modal.classList.remove('hidden');
+    }
+  }
+
+  // Hero "Bildiri Gönder" linkini intercept et — önce tip sor
+  document.addEventListener('click', function (e) {
+    const target = e.target;
+    // Hero "Bildiri Gönder" linki (#basvuru hash linki)
+    if (target && target.tagName === 'A' && target.getAttribute('href') === '#basvuru') {
+      // Eğer düzenleme modundaysa, modal sorma — direkt forma git
+      if (editingId) return;
+      // Eğer bu oturumda zaten tip seçildiyse, tekrar sorma — direkt git
+      if (typeChosenForSession) return;
+      e.preventDefault();
+      openTypeChooser();
+    }
+  });
+
+  // Tip seçim modalı butonları
+  const typeContinueBtn = document.getElementById('typeContinueBtn');
+  if (typeContinueBtn) {
+    typeContinueBtn.addEventListener('click', function () {
+      const selected = document.querySelector('input[name="submissionType"]:checked');
+      currentType = (selected && selected.value === 'talk') ? 'talk' : 'poster';
+      typeChosenForSession = true;
+      document.getElementById('typeChooserModal').classList.add('hidden');
+      refreshTypeBanner();
+      // Forma scroll
+      setTimeout(function () {
+        document.getElementById('basvuru').scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+    });
+  }
+
+  // Banner'daki "Değiştir" butonu
+  const typeBannerChangeBtn = document.getElementById('typeBannerChangeBtn');
+  if (typeBannerChangeBtn) {
+    typeBannerChangeBtn.addEventListener('click', function () {
+      if (editingId) {
+        alert('Düzenleme modunda tür değiştirilemez. Sadece admin değiştirebilir.');
+        return;
+      }
+      openTypeChooser();
+    });
+  }
 
   // ---- Düzenleme modu yardımcıları ----
   function enterEditMode(sub, email) {
     editingId = sub.id;
     editingEmail = email;
+    currentType = sub.type === 'talk' ? 'talk' : 'poster';
+    typeChosenForSession = true;
+    refreshTypeBanner();
     // Form'u bildiri verisiyle doldur
     authorList.innerHTML = '';
     affList.innerHTML = '';

@@ -34,6 +34,7 @@
     if (!r) return null;
     return {
       id: r.id,
+      type: r.type || 'poster',
       status: r.status,
       statusNote: r.status_note || '',
       title: r.title,
@@ -54,6 +55,7 @@
 
   function subToRow(s) {
     return {
+      type: (s.type === 'talk' ? 'talk' : 'poster'),
       title: s.title,
       abstract: s.abstract,
       keywords: s.keywords || [],
